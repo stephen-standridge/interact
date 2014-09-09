@@ -1,9 +1,10 @@
-define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./eventEmitter", "./simpleFunctions"], function(oneshot, toggleable, remote, broadcast, fun) {
+define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./eventEmitter", "./simpleFunctions", "./conditionalContent"], function(oneshot, toggleable, remote, broadcast, fun, condition) {
 
   function Interaction(domElem){
       this.changeables = {};
       this.currentScene = 0;
       this.currentSubscene = 0;
+      this.assertions = [];
       this.dom = domElem;
       this.sceneMap = [];
       this.events = new broadcast(self);
@@ -46,11 +47,50 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
           }
           self.controls.updateAllContent();
         },
+        assert : function(args){
+          if(typeof args == 'string'){
+            var isInArray = fun.inArray(args, self.assertions)
+            if( isInArray === false){
+              self.assertions.push(args)
+            }
+          }else{
+            for(var z=0; z<args.length; z++){
+              var isInArray = fun.inArray(args[z], self.assertions)
+              if( isInArray === false){
+                self.assertions.push(args[z])
+              }
+            }
+          }
+          self.controls.updateConditionalContent(self.assertions);
+        },
+        redact : function(args){
+          if(typeof args == 'string'){
+            var isInArray = fun.inArray(args, self.assertions)
+            if( isInArray === true){
+              var index = self.assertions.indexOf(args);
+              self.assertions.split(index, 1)
+            }
+          }else{
+            for(var z=0; z<args.length; z++){
+              var isInArray = fun.inArray(args[z], self.assertions)
+              if( isInArray === true){
+                var index = self.assertions.indexOf(args[z]);
+                self.assertions.split(index, 1)
+              }
+            }
+          }
+          self.controls.updateConditionalContent();
+        },
+        approve : function(){
+
+        },
         updateAllContent : function(){
           self.controls.updateDynamicContent();
           self.controls.updateDynamicAppearances();
+          self.controls.updateConditionalContent();
         },
         updateDynamicContent : function(direction){
+          ///refactor now that .dynamicClass() exists//
           for(var current in self.changeables.content){
             var item =  self.changeables.content[current].contents;
             for(var scene in item){
@@ -65,13 +105,12 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
                       classFrom = obj.defaultClass;
                       element.setAttribute("class", classFrom);
                   if(scene == self.currentScene){
-                    if(subscene == self.currentSubscene || subscene == 'all'){
-                      element.setAttribute("class", classFrom+ ' ' +onClass)
-                    } else {
-                      element.setAttribute("class", classFrom+ ' ' +offClass)
-                    }
+                    if( subscene == self.currentSubscene || subscene == 'all' ){ obj.currentState = "on"; }
+                    else { obj.currentState = "off";}
+                    obj.dynamicClass();
                   } else {
-                    element.setAttribute("class", classFrom+ ' ' +offClass);
+                    obj.currentState = "off";
+                    obj.dynamicClass();
                   }
                 }
               }
@@ -80,25 +119,12 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
         },
         updateDynamicAppearances : function(){
           for( var current in self.changeables.appearance ){
-            var element, classFrom, item;
-                element = self.changeables.appearance[current].dom;
-                classFrom = self.changeables.appearance[current].defaultClass;
-                item = self.changeables.appearance[current].appearances;
-                element.setAttribute("class", classFrom)
-            for( var scene in item ){
-              for( var one in item[scene] ){
-                var that, subscene;
-                    that = item[scene];
-                    subscene = Object.keys(that[one])[0];
-                if( self.currentScene == scene ){
-                  if( self.currentSubscene == subscene || subscene == 'all' ){
-                    element.setAttribute("class", classFrom+ " "+ that[one][subscene])
-                    element.style.animationPlayState = 'running';
-                    element.style.webkitAnimationPlayState = 'running';
-                  }
-                }
-              }
-            }
+            self.changeables.appearance[current].dynamicClass(self.currentScene, self.currentSubscene);
+          }
+        },
+        updateConditionalContent : function(){
+          for( var current in self.changeables.conditionals ){
+            self.changeables.conditionals[current].dynamicClass(self.assertions);
           }
         }
       }
@@ -128,9 +154,9 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
       this.events.on('dynamic-appearance-initialized', function(data){
         self.addToSceneMap(data);
       });
-      this.events.on('control-given', function(control){
+      this.events.on('control-given', function(control, additional){
         ///check if emitted id matches its id
-        self.controls[control](control);
+        self.controls[control](additional);
       });
 
 
@@ -155,11 +181,13 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
               tempdom : allControls[a],
               templistener : $(allControls[a]).data('control-listener'),
               tempcontrol : $(allControls[a]).data('control'),
+              tempapprove : $(allControls[a]).data('confirm')
             }
             allControls[a].removeAttribute('data-control')
             allControls[a].removeAttribute('data-control-listener')
+            allControls[a].removeAttribute('data-confirm')
 
-            var currentControl = new remote(currentControls.tempdom, currentControls.templistener, currentControls.tempcontrol)
+            var currentControl = new remote(currentControls.tempdom, currentControls.templistener, currentControls.tempcontrol, currentControls.tempapprove)
             currentControl.initialize();
             retrunedControls.push(currentControl);
           });
@@ -175,9 +203,17 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
 
 
     this.changeables = function(self){
-        var possibleChangeables = { appearance : [], content : [] };
+        var possibleChangeables = { appearance : [], content : [], conditionals : []};
         var dynamicItems = $(self.dom).find('.dynamic');
         var dynamicContainer = $(self.dom).find('.dynamic-content');
+        var conditionalItems = $(self.dom).find('.conditional');
+        if( conditionalItems.length ){
+          for( var j = 0; j< conditionalItems.length; j++ ){
+            var conditionalChangeable = new condition(conditionalItems[j], conditionalItems[j].getAttribute("class"));
+                conditionalChangeable.initialize();
+                possibleChangeables.conditionals.push(conditionalChangeable);
+          }
+        } else { possibleChangeables.conditionals = [];}
 
         if ( dynamicItems.length ) {
           for( var j = 0; j< dynamicItems.length; j++ ){
@@ -185,16 +221,15 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
                 appearanceChangeable.initialize();
                 possibleChangeables.appearance.push(appearanceChangeable);
           }
-        } else { possibleChangeables.appearance = null; }
-
+        } else { possibleChangeables.appearance = []; }
         if( dynamicContainer.length ){
           for(var k = 0; k<dynamicContainer.length; k++){
             var changeable = new toggleable(dynamicContainer[k])
                 changeable.initialize();
                 possibleChangeables.content.push(changeable);
           }
-        }else { possibleChangeables.content = null; }
-        if(possibleChangeables.appearance === null && possibleChangeables.content === null){
+        }else { possibleChangeables.content = []; }
+        if(possibleChangeables.appearance === null && possibleChangeables.content === null && possibleChangeables.conditionals){
           return null;
         }else {
           return possibleChangeables;

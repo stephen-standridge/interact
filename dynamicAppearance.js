@@ -3,6 +3,7 @@ define(['./defaultListeners', './eventEmitter'], function (defaults, broadcast) 
   function DynamicAppearance(object, defaultClass){
     this.dom = object;
     this.appearances = {};
+    this.currentState = [];
     this.defaultClass = defaultClass;
     this.events = new broadcast(self);
     defaults.animEnd(this);
@@ -12,10 +13,6 @@ define(['./defaultListeners', './eventEmitter'], function (defaults, broadcast) 
   DynamicAppearance.prototype.initialize = function(){
     var self = this;
     this.appearances = function(self){
-      var prefix = "";
-      if(self.dom.tagName == 'g'){
-        prefix = "g"
-      }
       if( $(self.dom).data('transformation') ){
         var appearanceTemp = $(self.dom).data('transformation').split(' ') ;
         var returnedHash = [];
@@ -39,6 +36,8 @@ define(['./defaultListeners', './eventEmitter'], function (defaults, broadcast) 
 
           if( returnedHash[pref] == undefined ){ returnedHash[pref] = []; }
           returnedHash[pref].push(obj);
+          if( self.appearances[pref] == undefined){ self.appearances[pref] = [];}
+          self.appearances[pref].push(obj)
           self.events.emit('dynamic-appearance-initialized', [pref, suff]);
 
         }
@@ -49,6 +48,36 @@ define(['./defaultListeners', './eventEmitter'], function (defaults, broadcast) 
       self.events.emit('dynamic-appearance-initialized');
       return returnedHash;
     }(self);
+  }
+
+  DynamicAppearance.prototype.dynamicClass = function(scene, subscene){
+    var self = this;
+    var tempClass = self.dom.getAttribute('class');
+    var tempState = [];
+      var theScene = self.appearances[scene];
+      var theSubscene;
+      if(theScene !== undefined){
+        var theSceneObject = self.appearances[scene];
+        for(var item in self.appearances[scene]){
+          var current = self.appearances[scene][item];
+          if(current[subscene] !== undefined ){
+            tempClass += current[subscene] == null ? "" :" "+current[subscene]
+            tempState.push(current[subscene])
+          }
+          if(current['all'] !== undefined) {
+            tempClass += current['all'] == null ? "" :" "+current['all']
+            tempState.push(current['all'])
+          }
+        }
+      }
+      for(var state in self.currentState){
+        tempClass = tempClass.replace(" "+self.currentState[state], "");
+      }
+      self.dom.setAttribute('class', tempClass);
+      self.dom.style.animationPlayState = 'running';
+      self.dom.style.webkitAnimationPlayState = 'running';
+      self.currentState = tempState;
+      return tempClass
   }
 
   return DynamicAppearance
