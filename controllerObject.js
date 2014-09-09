@@ -14,6 +14,13 @@ define(['./eventEmitter'], function (broadcast) {
 
   ControllerObject.prototype.initialize = function(){
     var self = this;
+    this.additional = function(self){
+      if(self.control.split(":").length > 1){
+        var returned = self.control.split(":")[1];
+        self.control = self.control.split(":")[0];
+        return returned;
+      }
+    }(self);
     this.processedListeners = function(self){
       var caseSwitch = typeof self.domListeners;
       switch(caseSwitch){
@@ -42,13 +49,7 @@ define(['./eventEmitter'], function (broadcast) {
         return null
       }
     }(self);
-    this.additional = function(self){
-      if(self.control.split(":").length > 1){
-        var returned = self.control.split(":")[1];
-        self.control = self.control.split(":")[0];
-        return returned;
-      }
-    }(self);
+
   };
 
   ControllerObject.prototype.setSwitch = function(scope){
@@ -77,8 +78,9 @@ define(['./eventEmitter'], function (broadcast) {
             })
           }
         });
+        break;
       default:
-        $(scope.dom).on(scope.domListeners, function(e){
+        $(scope.dom).on(scope.domListeners.toString(), function(e){
           // scope.events.emit('control-given', scope.control/*, add scope.parentid to it*/)
           e.preventDefault();
           var tempClass = scope.dom.getAttribute('class')

@@ -177,19 +177,23 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
           var allControls = $(self.dom).find('.control');
           var currentControls = [];
           $(allControls).each(function(a){
-            currentControls = {
-              tempdom : allControls[a],
-              templistener : $(allControls[a]).data('control-listener'),
-              tempcontrol : $(allControls[a]).data('control'),
-              tempapprove : $(allControls[a]).data('confirm')
-            }
-            allControls[a].removeAttribute('data-control')
-            allControls[a].removeAttribute('data-control-listener')
-            allControls[a].removeAttribute('data-confirm')
+            var elem = allControls[a];
+            var operand = $(elem).data('control').split("+")
+            for( var c=0; c<operand.length; c++){
+              currentControls = {
+                tempdom : elem,
+                templistener : $(elem).data('control-listener'),
+                tempcontrol : operand[c],
+                tempapprove : $(elem).data('confirm')
+              }
+              allControls[a].removeAttribute('data-control')
+              allControls[a].removeAttribute('data-control-listener')
+              allControls[a].removeAttribute('data-confirm')
 
-            var currentControl = new remote(currentControls.tempdom, currentControls.templistener, currentControls.tempcontrol, currentControls.tempapprove)
-            currentControl.initialize();
-            retrunedControls.push(currentControl);
+              var currentControl = new remote(currentControls.tempdom, currentControls.templistener, currentControls.tempcontrol, currentControls.tempapprove)
+              currentControl.initialize();
+              retrunedControls.push(currentControl);
+            }
           });
         }else{
           newController = new remote(self.dom, 'default', 'forward');
