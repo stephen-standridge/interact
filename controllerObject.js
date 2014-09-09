@@ -35,6 +35,7 @@ define(['./eventEmitter'], function (broadcast) {
         var children = $(self.dom).children('.approve');
         for(var a=0; a<children.length; a++){
           returnedItems[children[a].getAttribute('data-control')] = children[a]
+          children[a].removeAttribute('data-control')
         }
         return returnedItems;
       } else{

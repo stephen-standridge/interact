@@ -4,7 +4,7 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
       this.changeables = {};
       this.currentScene = 0;
       this.currentSubscene = 0;
-      this.assertions = [];
+      this.assertions = ["start"];
       this.dom = domElem;
       this.sceneMap = [];
       this.events = new broadcast(self);
@@ -68,14 +68,14 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
             var isInArray = fun.inArray(args, self.assertions)
             if( isInArray === true){
               var index = self.assertions.indexOf(args);
-              self.assertions.split(index, 1)
+              self.assertions.splice(index, 1)
             }
           }else{
             for(var z=0; z<args.length; z++){
               var isInArray = fun.inArray(args[z], self.assertions)
               if( isInArray === true){
                 var index = self.assertions.indexOf(args[z]);
-                self.assertions.split(index, 1)
+                self.assertions.splice(index, 1)
               }
             }
           }

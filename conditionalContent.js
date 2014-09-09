@@ -1,10 +1,10 @@
 define(['./temporaryContent', './eventEmitter', './defaultListeners'], function (temp, broadcast, defaults) {
-  //operates like a switch, checks its children for data-transformation
-  //if none, return null/error
-  //if exists
-  //takes one scene, one subscene, a special state, and a default state.
-  //toggles the special state on during specified scene
-  //creates a hash that is { scene { subscene : [temporaryContent] } }
+  //operates like a conditional switch
+  //used on concert with the assertion/revokation controllers
+  //set class to be used when assertion == true
+
+  //takes conditions, a special state, and a reverted state
+  //toggles the special state on during condition
 
 
   function ConditionalContent(DOMelem, classes){
@@ -52,22 +52,22 @@ define(['./temporaryContent', './eventEmitter', './defaultListeners'], function 
     if( passed === undefined || passed.length === undefined){
       return tempClass;
     }else {
-      console.log(tempClass)
-      for( var state in passed){
-        for( var y=0; y<self.states.length; y++){
-          var twoStates = self.states[y][passed[state]];
-          if(twoStates !== undefined){
-            if(Object.keys(self.states[y]) == passed[state] ){
-              tempClass = tempClass.replace(" "+twoStates[1], "")
-              tempClass = tempClass.replace(" "+twoStates[0], "")
-              tempClass += twoStates[0] == null ? "" :" "+twoStates[0]
-            } else {
-              tempClass = tempClass.replace(" "+twoStates[1], "")
-              tempClass = tempClass.replace(" "+twoStates[0], "")
-              tempClass += twoStates[1] == null ? "" :" "+twoStates[1]
-            }
+
+      for( var y=0; y<self.states.length; y++){
+        for(var current in self.states[y]){
+          var onState = self.states[y][current][0]
+          var offState = self.states[y][current][1]
+        }
+        tempClass = tempClass.replace(" "+onState, "")
+        tempClass = tempClass.replace(" "+offState, "")
+        tempClass += offState == null ? "" :" "+offState
+        for( var state in passed){
+          if(Object.keys(self.states[y]) == passed[state] ){
+            tempClass = tempClass.replace(" "+offState, "")
+            tempClass += onState == null ? "" :" "+onState
           }
         }
+
       }
       self.dom.setAttribute('class', tempClass)
       return tempClass
