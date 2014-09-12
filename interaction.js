@@ -7,6 +7,12 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
       this.assertions = ["start"];
       this.dom = domElem;
       this.sceneMap = [];
+      this.unsigned = [];
+      this.totalScenes = null;
+      this.probabilitiesCount = 0;
+      this.subProbabilitiesCount = [];
+      this.totalPossibilities = 0;
+      this.subTotalPossibilities = [];
       this.events = new broadcast(self);
       return this;
   };
@@ -16,6 +22,7 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
         start : function(context){
           self.currentScene = 1;
           self.controls.updateAllContent();
+          self.sceneMap = self.fillSceneMap(self);
         },
         forward : function(){
           if(self.sceneMap[self.currentScene] !== undefined){
@@ -90,31 +97,8 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
           self.controls.updateConditionalContent();
         },
         updateDynamicContent : function(direction){
-          ///refactor now that .dynamicClass() exists//
           for(var current in self.changeables.content){
-            var item =  self.changeables.content[current].contents;
-            for(var scene in item){
-              for(var subscene in item[scene]){
-                var that = item[scene][subscene];
-                for(var one in that){
-                  var obj, element, onClass, offClass, classFrom;
-                      obj = that[one];
-                      element = obj.dom;
-                      onClass = obj.specialState;
-                      offClass = obj.callbackState;
-                      classFrom = obj.defaultClass;
-                      element.setAttribute("class", classFrom);
-                  if(scene == self.currentScene){
-                    if( subscene == self.currentSubscene || subscene == 'all' ){ obj.currentState = "on"; }
-                    else { obj.currentState = "off";}
-                    obj.dynamicClass();
-                  } else {
-                    obj.currentState = "off";
-                    obj.dynamicClass();
-                  }
-                }
-              }
-            }
+            self.changeables.content[current].dynamicClass(self.currentScene, self.currentSubscene);
           }
         },
         updateDynamicAppearances : function(){
@@ -131,6 +115,7 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
 
 
     this.addToSceneMap = function(arg){
+      console.log(arg)
         var pref, suff;
         if(arg !== undefined){
           pref = arg[0];
@@ -141,11 +126,30 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
             }
             isInArray = fun.inArray(suff, this.sceneMap[pref]);
             if( isInArray === false) {
-              this.sceneMap[pref].push(suff);
+              this.sceneMap[pref][suff] = suff;
             }
           }
         }
-      }
+      }//only constructs an array of scene : [subscene, subscene, subscene]
+      this.addToUnsigned = function(arg){
+          if(arg !== undefined){
+            pref = arg[0];
+            suff = arg[1];
+            if(pref == 'unsigned'){
+              self.totalPossibilities += 1;
+              console.log(self.totalPossibilities)
+            }
+            if(suff == 'unsigned'){
+              if(self.subTotalPossibilities[pref] == undefined){
+                self.subTotalPossibilities[pref] = 0;
+              }
+              self.subTotalPossibilities[pref] += 1;
+            }
+          }
+        }
+      }//takes unsigned and creates an array of scene(or unsigned) : [subscene(or unsigned)]
+
+
 
 
       this.events.on('dynamic-content-initialized', function(data){
@@ -158,17 +162,63 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
         ///check if emitted id matches its id
         self.controls[control](additional);
       });
+      this.events.on('unsigned-element', function(data){
+        self.addToUnsigned(data);
+      })
+
 
 
     this.totalScenes = function(self){
         var total = self.dom.getAttribute('data-scenes');
-        if(total === undefined || isNaN(Number(total)) === true){
+                    self.dom.removeAttribute('data-scenes');
+        if(total === null || isNaN(Number(total)) === true){
           return null
         } else {
           return Number(total);
         }
-        self.dom.removeAttribute('data-scenes');
       }(self);
+    this.fillSceneMap = function(self){
+      var sceneCount = self.totalScenes == null ? self.sceneMap.length - 1 : self.totalScenes;
+      //if a total scene count is set, use it.
+      //if not, infer the total scenes from the last numbered scene
+      var scenesToAdd = sceneCount - (self.sceneMap.length - 1);
+      if(scenesToAdd > 0){
+        for(var g=1; g<=self.totalScenes; g++){
+          if(self.sceneMap[g] === undefined ){
+            self.sceneMap[g] = 'unsigned';
+            self.probabilitiesCount += 1;
+          }
+        }
+      } else if (scenesToAdd < 0){
+        for(var g=self.totalScenes+1; g<self.sceneMap.length; g++){
+          delete self.sceneMap[g]
+        }
+      } else {
+        for (var g=0; g<=sceneCount; g++){
+          if(self.sceneMap[g] === undefined){
+            self.sceneMap[g] = 'unsigned';
+            self.probabilitiesCount += 1;
+          }
+        }
+      }
+
+      for(var h=0; h<self.sceneMap.length; h++){
+        var length = self.sceneMap[h].length-1;
+        var maxSubscene = self.sceneMap[h][length];
+        for(var q=0; q<maxSubscene; q++){
+          if(self.sceneMap[h][q] === undefined){
+            self.sceneMap[h][q] = 'unsigned';
+            if(self.subProbabilitiesCount[h] == undefined){ self.subProbabilitiesCount[h] = 0}
+              self.subProbabilitiesCount[h]+= 1;
+          }
+        }
+      }
+
+      return self.sceneMap;
+    }
+    this.assignProbability = function(){
+
+    }
 
 
     this.controller = function(self){

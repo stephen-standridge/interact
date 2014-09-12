@@ -6,7 +6,6 @@ require(["./interaction", "./eventEmitter"], function(game, broadcast) {
       for (var l = 0; l < possibleInteractions.length; l ++){
           var currentInteraction = new game(possibleInteractions[l]);
           currentInteraction.initialize();
-          currentInteraction.events.emit('control-given', 'start');
           parsedInteractions.push(currentInteraction);
       }
       return parsedInteractions;

@@ -13,44 +13,61 @@ define(['./defaultListeners', './eventEmitter'], function (defaults, broadcast) 
   DynamicAppearance.prototype.initialize = function(){
     var self = this;
     this.appearances = function(self){
-      if( $(self.dom).data('transformation') ){
-        var appearanceTemp = $(self.dom).data('transformation').split(' ') ;
+      if( $(self.dom).data('scenemap') ){
+        var appearanceTemp = $(self.dom).data('scenemap').split(' ') ;
         var returnedHash = [];
-        var pref, suff, key, value, obj, subsplit;
+        var pref, suff, key, value, obj, scene_subscene;
         for( var a=0; a<appearanceTemp.length; a++ ){
-          var splitTransformation = appearanceTemp[a].split(':');
+          var splitscenemap = appearanceTemp[a].split(':');
               obj = {};
-              pref = splitTransformation[0];
+              pref = splitscenemap[0];
               suff = 0;
 
           if( isNaN(Number(pref)) ){
-            subsplit = pref.split('-');
-            pref = subsplit[0];
-            if( isNaN(Number(pref)) != true ){
-              suff = Number(subsplit[1]);
-              key = subsplit[1];
-              value = splitTransformation[1];
-              obj[key] = value;
+            scene_subscene = pref.split('-');
+            pref = isNaN(Number(scene_subscene[0])) == false ? Number(scene_subscene[0]) : scene_subscene[0];
+            value = isNaN(Number(splitscenemap[1])) == false ? Number(splitscenemap[1]) : splitscenemap[1]
+            //replace subscene with 'all' or 'unsigned' if not a numerical value
+            if(isNaN(Number(scene_subscene[1])) == true){
+              suff = scene_subscene[1] == 'all' ? 'all' : 'unsigned'
+              obj[suff] = value;
+            } else {
+              suff = Number(scene_subscene[1]);
+              obj[suff] = value;
             }
-          } else { obj = { 'all': splitTransformation[1] } }
 
-          if( returnedHash[pref] == undefined ){ returnedHash[pref] = []; }
-          returnedHash[pref].push(obj);
-          if( self.appearances[pref] == undefined){ self.appearances[pref] = [];}
-          self.appearances[pref].push(obj)
-          self.events.emit('dynamic-appearance-initialized', [pref, suff]);
+            //replace scene with unsigned, if not a numerical value
+            if(isNaN(Number(pref))){
+              pref = 'unsigned';
+            }else{
+              pref = Number(pref)
+            }
+
+          } else { obj = { 'all': splitscenemap[1] } }
+
+          if(pref == ''){
+          }else {
+            if( returnedHash[pref] == undefined ){ returnedHash[pref] = []; }
+            returnedHash[pref].push(obj);
+            self.events.emit('dynamic-appearance-initialized', [pref, suff]);
+
+            if( pref == 'unsigned' || suff == 'unsigned'){
+              self.events.emit('unsigned-element', [pref, suff]);
+            }
+          }
 
         }
-        self.dom.removeAttribute('data-transformation');
+        self.dom.removeAttribute('data-scenemap');
       } else {
         return null
       }
-      self.events.emit('dynamic-appearance-initialized');
       return returnedHash;
     }(self);
   }
 
-  DynamicAppearance.prototype.dynamicClass = function(scene, subscene){
+  DynamicAppearance.prototype.dynamicClass = function(scene, subscene, probability){
+    ///add condition if scene == undefined || subscene == undefined
+
     var self = this;
     var tempClass = self.dom.getAttribute('class');
     var tempState = [];
