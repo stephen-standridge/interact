@@ -6,6 +6,7 @@ define(['./defaultListeners', './eventEmitter'], function (defaults, broadcast) 
     this.currentState = [];
     this.defaultClass = defaultClass;
     this.events = new broadcast(self);
+    this.unsigned = false;
     defaults.animEnd(this);
     return this;
   };
@@ -29,7 +30,9 @@ define(['./defaultListeners', './eventEmitter'], function (defaults, broadcast) 
             value = isNaN(Number(splitscenemap[1])) == false ? Number(splitscenemap[1]) : splitscenemap[1]
             //replace subscene with 'all' or 'unsigned' if not a numerical value
             if(isNaN(Number(scene_subscene[1])) == true){
-              suff = scene_subscene[1] == 'all' ? 'all' : 'unsigned'
+              // suff = scene_subscene[1] == 'all' ? 'all' : 'unsigned'
+              suff = 'all'
+              self.unsigned = scene_subscene[0] == 'all' ? false : true
               obj[suff] = value;
             } else {
               suff = Number(scene_subscene[1]);
@@ -39,6 +42,7 @@ define(['./defaultListeners', './eventEmitter'], function (defaults, broadcast) 
             //replace scene with unsigned, if not a numerical value
             if(isNaN(Number(pref))){
               pref = 'unsigned';
+              self.unsigned = true;
             }else{
               pref = Number(pref)
             }
@@ -65,14 +69,15 @@ define(['./defaultListeners', './eventEmitter'], function (defaults, broadcast) 
     }(self);
   }
 
-  DynamicAppearance.prototype.dynamicClass = function(scene, subscene, probability){
+  DynamicAppearance.prototype.dynamicClass = function(scene, subscene){
+    console.log(this)
     ///add condition if scene == undefined || subscene == undefined
-
     var self = this;
     var tempClass = self.dom.getAttribute('class');
     var tempState = [];
-      var theScene = self.appearances[scene];
+      var theScene = this.appearances[scene];
       var theSubscene;
+      console.log(theScene)
       if(theScene !== undefined){
         var theSceneObject = self.appearances[scene];
         for(var item in self.appearances[scene]){
@@ -95,6 +100,19 @@ define(['./defaultListeners', './eventEmitter'], function (defaults, broadcast) 
       self.dom.style.webkitAnimationPlayState = 'running';
       self.currentState = tempState;
       return tempClass
+  }
+  DynamicAppearance.prototype.determineProbability = function(scene, subscene, probability){
+    var actuality = Math.random()
+    if( actuality < probability){
+      console.log(this)
+      this.appearances[scene] = this.appearances['unsigned']
+      delete this.appearances['unsigned'];
+      this.dynamicClass(scene, subscene)
+      this.events.emit('probable', this)
+      return true;
+    } else {
+      return false;
+    }
   }
 
   return DynamicAppearance

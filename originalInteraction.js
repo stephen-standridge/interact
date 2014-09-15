@@ -1,5 +1,4 @@
-
-define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./eventEmitter", "./simpleFunctions", "./conditionalContent", "./sceneMap"], function(oneshot, toggleable, remote, broadcast, fun, condition, map) {
+define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./eventEmitter", "./simpleFunctions", "./conditionalContent"], function(oneshot, toggleable, remote, broadcast, fun, condition) {
 
   function Interaction(domElem){
       this.changeables = {};
@@ -7,30 +6,30 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
       this.currentSubscene = 0;
       this.assertions = ["start"];
       this.dom = domElem;
-      this.probCalculable = null;
-      this.subprobCalcuable = [];
-      this.sceneMap = new map();
+      this.sceneMap = [];
+      this.unsigned = [];
       this.totalScenes = null;
+      this.probabilitiesCount = 0;
+      this.subProbabilitiesCount = [];
+      this.totalPossibilities = 0;
+      this.subTotalPossibilities = [];
       this.events = new broadcast(self);
-      this.totalEmptyScenes = 0;
-      this.subtotalEmptyScenes = [];
       return this;
   };
   Interaction.prototype.initialize = function(){
     var self = this;
     this.controls = {
         start : function(context){
-          self.sceneMap.initialize(self.totalScenes);
-          self.totalEmptyScenes = self.sceneMap.totalEmptyScenes;
           self.currentScene = 1;
           self.controls.updateAllContent();
+          self.sceneMap = self.fillSceneMap(self);
         },
         forward : function(){
-          if(self.sceneMap.map[self.currentScene] !== undefined){
-            if(self.currentSubscene < self.sceneMap.map[self.currentScene].length - 1){
+          if(self.sceneMap[self.currentScene] !== undefined){
+            if(self.currentSubscene < self.sceneMap[self.currentScene].length - 1){
               self.currentSubscene++;
             }else {
-              if(self.sceneMap.map[self.currentScene + 1]!== undefined){
+              if(self.sceneMap[self.currentScene + 1]!== undefined){
                 self.currentScene++;
                 self.currentSubscene = 0;
               }
@@ -45,7 +44,7 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
             } else {
               if(self.currentScene > 1){
                 self.currentScene--;
-                self.currentSubscene = self.sceneMap.map[self.currentScene].length-1;
+                self.currentSubscene = self.sceneMap[self.currentScene].length-1;
               }else if(self.currentScene == 1){
                 if(self.currentSubscene >= 1){
                   self.currentSubscene--;
@@ -99,21 +98,12 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
         },
         updateDynamicContent : function(direction){
           for(var current in self.changeables.content){
-            console.log(self.changeables.content)
             self.changeables.content[current].dynamicClass(self.currentScene, self.currentSubscene);
           }
         },
         updateDynamicAppearances : function(){
           for( var current in self.changeables.appearance ){
             self.changeables.appearance[current].dynamicClass(self.currentScene, self.currentSubscene);
-          }
-          if(self.sceneMap.map[self.currentScene] == 'unsigned'){
-            for( var current in self.changeables.unsigned){
-              var check = self.changeables.unsigned[current].determineProbability(self.currentScene, self.currentSubscene, self.probability())
-              if(check === true){
-                break;
-              }
-            }
           }
         },
         updateConditionalContent : function(){
@@ -123,49 +113,59 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
         }
       }
 
+
+    this.addToSceneMap = function(arg){
+      console.log(arg)
+        var pref, suff;
+        if(arg !== undefined){
+          pref = arg[0];
+          suff = arg[1];
+          if(isNaN(pref) == false && isNaN(suff) === false){
+            if(this.sceneMap[pref] == undefined){
+              this.sceneMap[pref] = [];
+            }
+            isInArray = fun.inArray(suff, this.sceneMap[pref]);
+            if( isInArray === false) {
+              this.sceneMap[pref][suff] = suff;
+            }
+          }
+        }
+      }//only constructs an array of scene : [subscene, subscene, subscene]
+      this.addToUnsigned = function(arg){
+          if(arg !== undefined){
+            pref = arg[0];
+            suff = arg[1];
+            if(pref == 'unsigned'){
+              self.totalPossibilities += 1;
+              console.log(self.totalPossibilities)
+            }
+            if(suff == 'unsigned'){
+              if(self.subTotalPossibilities[pref] == undefined){
+                self.subTotalPossibilities[pref] = 0;
+              }
+              self.subTotalPossibilities[pref] += 1;
+            }
+          }
+
+      }
+
+
+
+
       this.events.on('dynamic-content-initialized', function(data){
-        self.sceneMap.addToSceneMap(data);
+        self.addToSceneMap(data);
       });
       this.events.on('dynamic-appearance-initialized', function(data){
-        self.sceneMap.addToSceneMap(data);
+        self.addToSceneMap(data);
       });
-      this.events.on('unsigned-element', function(data){
-        self.sceneMap.addToUnsigned(data);
-      })
       this.events.on('control-given', function(control, additional){
         ///check if emitted id matches its id
         self.controls[control](additional);
       });
-      this.events.on('probable', function(object){
-        self.resetProbability(object);
+      this.events.on('unsigned-element', function(data){
+        self.addToUnsigned(data);
       })
 
-
-
-    this.resetProbability = function(obj){
-      this.changeables.appearance.push(obj);
-      this.changeables.unsigned.splice(fun.findObject(this.changeables.unsigned, obj, 'index'), 1);
-      console.table(self.changeables.unsigned)
-      this.sceneMap.totalPossibleScenes--;
-      this.probCalculable = 1;
-      this.totalEmptyScenes--;
-      this.changeables.unsigned = fun.shuffleArray(this.changeables.unsigned);
-    }
-
-    this.probability = function(){
-      var calculatedProbability;
-      if(this.probCalculable == null){this.probCalculable = 1}
-      if(this.sceneMap.totalPossibleScenes >= this.probCalculable){
-        calculatedProbability =  this.probCalculable / this.totalEmptyScenes;
-        this.probCalculable ++;
-      } else {
-        calculatedProbability = 1;
-      }
-      if(calculatedProbability == Infinity){
-        calculatedProbability = 0;
-      }
-      return calculatedProbability;
-    }
 
 
     this.totalScenes = function(self){
@@ -177,6 +177,48 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
           return Number(total);
         }
       }(self);
+    this.fillSceneMap = function(self){
+      var sceneCount = self.totalScenes == null ? self.sceneMap.length - 1 : self.totalScenes;
+      //if a total scene count is set, use it.
+      //if not, infer the total scenes from the last numbered scene
+      var scenesToAdd = sceneCount - (self.sceneMap.length - 1);
+      if(scenesToAdd > 0){
+        for(var g=1; g<=self.totalScenes; g++){
+          if(self.sceneMap[g] === undefined ){
+            self.sceneMap[g] = 'unsigned';
+            self.probabilitiesCount += 1;
+          }
+        }
+      } else if (scenesToAdd < 0){
+        for(var g=self.totalScenes+1; g<self.sceneMap.length; g++){
+          delete self.sceneMap[g]
+        }
+      } else {
+        for (var g=0; g<=sceneCount; g++){
+          if(self.sceneMap[g] === undefined){
+            self.sceneMap[g] = 'unsigned';
+            self.probabilitiesCount += 1;
+          }
+        }
+      }
+
+      for(var h=0; h<self.sceneMap.length; h++){
+        var length = self.sceneMap[h].length-1;
+        var maxSubscene = self.sceneMap[h][length];
+        for(var q=0; q<maxSubscene; q++){
+          if(self.sceneMap[h][q] === undefined){
+            self.sceneMap[h][q] = 'unsigned';
+            if(self.subProbabilitiesCount[h] == undefined){ self.subProbabilitiesCount[h] = 0}
+              self.subProbabilitiesCount[h]+= 1;
+          }
+        }
+      }
+
+      return self.sceneMap;
+    }
+    this.assignProbability = function(){
+
+    }
 
 
     this.controller = function(self){
@@ -215,7 +257,7 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
 
 
     this.changeables = function(self){
-        var possibleChangeables = { appearance : [], content : [], conditionals : [], unsigned : []};
+        var possibleChangeables = { appearance : [], content : [], conditionals : []};
         var dynamicItems = $(self.dom).find('.dynamic');
         var dynamicContainer = $(self.dom).find('.dynamic-content');
         var conditionalItems = $(self.dom).find('.conditional');
@@ -231,11 +273,7 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
           for( var j = 0; j< dynamicItems.length; j++ ){
             var appearanceChangeable = new oneshot(dynamicItems[j], dynamicItems[j].getAttribute("class"));
                 appearanceChangeable.initialize();
-                if(appearanceChangeable.unsigned === true ){
-                  possibleChangeables.unsigned.push(appearanceChangeable);
-                }else {
-                  possibleChangeables.appearance.push(appearanceChangeable);
-                }
+                possibleChangeables.appearance.push(appearanceChangeable);
           }
         } else { possibleChangeables.appearance = []; }
         if( dynamicContainer.length ){
@@ -252,7 +290,20 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
         }
 
       }(self);
-
     };
+
     return Interaction
 });
+
+
+// Interaction ->(the game)
+//    changeables ->(things about the game that will change)
+//      appearance->(one-shot changes)
+//                  dom Element
+//                    scene changed=>
+//                      subscene   => value
+//      content->   (toggleable changes)
+//                  dom Element
+//                    scene changed in => value to change
+//
+//
