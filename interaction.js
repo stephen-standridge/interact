@@ -5,6 +5,7 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
       this.changeables = {};
       this.currentScene = 0;
       this.currentSubscene = 0;
+      this.type = '';
       this.assertions = ["start"];
       this.dom = domElem;
       this.probCalculable = null;
@@ -22,10 +23,23 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
         start : function(context){
           self.sceneMap.initialize(self.totalScenes);
           self.totalEmptyScenes = self.sceneMap.totalEmptyScenes;
-          self.currentScene = 1;
-          self.controls.updateAllContent();
+          self.controls.redact('start')
+          self.controls.forward();
         },
         forward : function(){
+          if(self.currentScene === self.totalScenes){
+            switch(self.type){
+              case 'linear':
+                self.controls.assert('end')
+                break;
+              case 'loop':
+                self.currentScene = 1;
+                self.currentSubscene = 0;
+                break;
+              default :
+                break;
+            }
+          }
           if(self.sceneMap.map[self.currentScene] !== undefined){
             if(self.currentSubscene < self.sceneMap.map[self.currentScene].length - 1){
               self.currentSubscene++;
@@ -36,6 +50,7 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
               }
             }
           }
+          if(self.currentScene == 0){self.currentScene ++}
           self.controls.updateAllContent();
         },
         backward : function(){
@@ -99,7 +114,6 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
         },
         updateDynamicContent : function(direction){
           for(var current in self.changeables.content){
-            console.log(self.changeables.content)
             self.changeables.content[current].dynamicClass(self.currentScene, self.currentSubscene);
           }
         },
@@ -141,7 +155,10 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
       })
 
 
-
+      this.type = function(self){
+        var returnedType = self.dom.getAttribute('data-type');
+        return returnedType
+      }(self);
     this.resetProbability = function(obj){
       this.changeables.appearance.push(obj);
       this.changeables.unsigned.splice(fun.findObject(this.changeables.unsigned, obj, 'index'), 1);
@@ -223,6 +240,7 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
           for( var j = 0; j< conditionalItems.length; j++ ){
             var conditionalChangeable = new condition(conditionalItems[j], conditionalItems[j].getAttribute("class"));
                 conditionalChangeable.initialize();
+                conditionalChangeable.dynamicClass(self.assertions);
                 possibleChangeables.conditionals.push(conditionalChangeable);
           }
         } else { possibleChangeables.conditionals = [];}

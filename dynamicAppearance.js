@@ -70,14 +70,12 @@ define(['./defaultListeners', './eventEmitter'], function (defaults, broadcast) 
   }
 
   DynamicAppearance.prototype.dynamicClass = function(scene, subscene){
-    console.log(this)
     ///add condition if scene == undefined || subscene == undefined
     var self = this;
     var tempClass = self.dom.getAttribute('class');
     var tempState = [];
       var theScene = this.appearances[scene];
       var theSubscene;
-      console.log(theScene)
       if(theScene !== undefined){
         var theSceneObject = self.appearances[scene];
         for(var item in self.appearances[scene]){
@@ -104,7 +102,6 @@ define(['./defaultListeners', './eventEmitter'], function (defaults, broadcast) 
   DynamicAppearance.prototype.determineProbability = function(scene, subscene, probability){
     var actuality = Math.random()
     if( actuality < probability){
-      console.log(this)
       this.appearances[scene] = this.appearances['unsigned']
       delete this.appearances['unsigned'];
       this.dynamicClass(scene, subscene)
