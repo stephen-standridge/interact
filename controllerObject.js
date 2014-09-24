@@ -13,13 +13,16 @@ define(['./eventEmitter'], function (broadcast) {
   };
 
   ControllerObject.prototype.initialize = function(){
+    ///need to make all controls on each element one object that cycles through and emits each control after approval//
     var self = this;
-    this.additional = function(self){
-      if(self.control.split(":").length > 1){
-        var returned = self.control.split(":")[1];
-        self.control = self.control.split(":")[0];
-        return returned;
+    this.control = function(self){
+      var returnedControl = {};
+      for(var i=0; i<self.control.length; i++){
+        var pref = self.control[i].split(":")[0];
+        var suff = self.control[i].split(":")[1] == undefined ? null : self.control[i].split(":")[1];
+        returnedControl[pref] = suff;
       }
+      return returnedControl;
     }(self);
     this.processedListeners = function(self){
       var caseSwitch = typeof self.domListeners;
@@ -49,6 +52,12 @@ define(['./eventEmitter'], function (broadcast) {
         return null
       }
     }(self);
+    this.emitControls = function(){
+      for(var item in self.control){
+        console.log(item+" "+self.control[item])
+        self.events.emit('control-given', item, self.control[item])
+      }
+    };
 
   };
 
@@ -57,23 +66,20 @@ define(['./eventEmitter'], function (broadcast) {
     switch(caseSwitch){
       case 'default':
         $(scope.dom).on('click', function(e){
-          // scope.events.emit('control-given', scope.control/*, add scope.parentid to it*/)
           e.preventDefault();
           var tempClass = scope.dom.getAttribute('class')
           if(scope.approval === undefined){
-            scope.events.emit('control-given', scope.control, scope.additional/*, add scope.parentid to it*/)
+            scope.emitControls();
             return true;
           } else {
             scope.dom.setAttribute('class', tempClass + " "+ scope.approval);
             $(scope.children['revoke']).on('click', function(){
               scope.dom.setAttribute('class', tempClass);
-              console.log('revoke')
               return false;
             });
             $(scope.children['confirm']).on('click', function(){
               scope.dom.setAttribute('class', tempClass);
-              scope.events.emit('control-given', scope.control, scope.additional/*, add scope.parentid to it*/)
-              console.log('confirm')
+              scope.emitControls();
               return false;
             })
           }
@@ -85,7 +91,7 @@ define(['./eventEmitter'], function (broadcast) {
           e.preventDefault();
           var tempClass = scope.dom.getAttribute('class')
           if(scope.approval === undefined){
-            scope.events.emit('control-given', scope.control, scope.additional/*, add scope.parentid to it*/)
+            scope.emitControls();
             return true;
           } else {
             scope.dom.setAttribute('class', tempClass + " "+ scope.approval);
@@ -95,7 +101,7 @@ define(['./eventEmitter'], function (broadcast) {
             });
             $(scope.children['confirm']).on(scope.domListeners, function(){
               scope.dom.setAttribute('class', tempClass);
-              scope.events.emit('control-given', scope.control, scope.additional/*, add scope.parentid to it*/)
+              scope.emitControls();
               return false;
             })
           }

@@ -73,29 +73,51 @@ define(['./defaultListeners', './eventEmitter'], function (defaults, broadcast) 
     ///add condition if scene == undefined || subscene == undefined
     var self = this;
     var tempClass = self.dom.getAttribute('class');
-    var tempState = [];
-      var theScene = this.appearances[scene];
-      var theSubscene;
-      if(theScene !== undefined){
-        var theSceneObject = self.appearances[scene];
-        for(var item in self.appearances[scene]){
-          var current = self.appearances[scene][item];
-          if(current[subscene] !== undefined ){
-            tempClass += current[subscene] == null ? "" :" "+current[subscene]
-            tempState.push(current[subscene])
-          }
-          if(current['all'] !== undefined) {
-            tempClass += current['all'] == null ? "" :" "+current['all']
-            tempState.push(current['all'])
+    var tempState = "";
+      // var theScene = this.appearances[scene];
+      // var theSubscene;
+      // if(theScene !== undefined){
+      //   var theSceneObject = self.appearances[scene];
+      //   for(var item in self.appearances[scene]){
+      //     var current = self.appearances[scene][item];
+      //     if(current[subscene] !== undefined ){
+      //       tempClass += current[subscene] == null ? "" :" "+current[subscene]
+      //       tempState.push(current[subscene])
+      //     }
+      //     if(current['all'] !== undefined) {
+      //       tempClass += current['all'] == null ? "" :" "+current['all']
+      //       tempState.push(current['all'])
+      //     }
+      //   }
+      // }
+      for(var loopedScene in self.appearances){
+        for(var loopedSubscene in self.appearances[loopedScene]){
+          var current = self.appearances[loopedScene][loopedSubscene];
+          var currentSubscene = Object.keys(self.appearances[loopedScene][loopedSubscene])
+          if(loopedScene == scene){
+            if(currentSubscene == 'all' || currentSubscene == subscene){
+              if(tempClass.indexOf(current[currentSubscene]) == -1){
+                tempState += " "+current[currentSubscene];
+              }
+            } else {
+              tempClass = tempClass.replace(" "+current[currentSubscene], "");
+            }
+          } else {
+            tempClass = tempClass.replace(" "+current[currentSubscene], "");
           }
         }
       }
-      for(var state in self.currentState){
-        tempClass = tempClass.replace(" "+self.currentState[state], "");
-      }
+      tempClass += tempState;
+
+      //takes each class(set by the previous call to this function)and replaces it with nothing//
+
+      // for(var state in self.currentState){
+
+      //   tempClass = tempClass.replace(" "+self.currentState[state], "");
+      // }
       self.dom.setAttribute('class', tempClass);
-      self.dom.style.animationPlayState = 'running';
-      self.dom.style.webkitAnimationPlayState = 'running';
+      // self.dom.style.animationPlayState = 'running';
+      // self.dom.style.webkitAnimationPlayState = 'running';
       self.currentState = tempState;
       return tempClass
   }

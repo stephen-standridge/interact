@@ -41,7 +41,7 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
             }
           }
           if(self.sceneMap.map[self.currentScene] !== undefined){
-            if(self.currentSubscene < self.sceneMap.map[self.currentScene].length - 1){
+            if(typeof(self.sceneMap.map[self.currentScene]) == 'object' && self.currentSubscene < self.sceneMap.map[self.currentScene].length - 1){
               self.currentSubscene++;
             }else {
               if(self.sceneMap.map[self.currentScene + 1]!== undefined){
@@ -162,7 +162,6 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
     this.resetProbability = function(obj){
       this.changeables.appearance.push(obj);
       this.changeables.unsigned.splice(fun.findObject(this.changeables.unsigned, obj, 'index'), 1);
-      console.table(self.changeables.unsigned)
       this.sceneMap.totalPossibleScenes--;
       this.probCalculable = 1;
       this.totalEmptyScenes--;
@@ -204,11 +203,10 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
           $(allControls).each(function(a){
             var elem = allControls[a];
             var operand = $(elem).data('control').split("+")
-            for( var c=0; c<operand.length; c++){
               currentControls = {
                 tempdom : elem,
                 templistener : $(elem).data('control-listener'),
-                tempcontrol : operand[c],
+                tempcontrol : operand,
                 tempapprove : $(elem).data('confirm')
               }
               allControls[a].removeAttribute('data-control')
@@ -218,8 +216,7 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
               var currentControl = new remote(currentControls.tempdom, currentControls.templistener, currentControls.tempcontrol, currentControls.tempapprove)
               currentControl.initialize();
               retrunedControls.push(currentControl);
-            }
-          });
+                      });
         }else{
           newController = new remote(self.dom, 'default', 'forward');
           newController.initialize();
