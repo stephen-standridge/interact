@@ -1,5 +1,5 @@
 
-define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./eventEmitter", "./simpleFunctions", "./conditionalContent", "./sceneMap"], function(oneshot, toggleable, remote, broadcast, fun, condition, map) {
+define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./eventEmitter", "./simpleFunctions", "./conditionalContent", "./sceneMap", "./abstractRecord"], function(oneshot, toggleable, remote, broadcast, fun, condition, map, record) {
 
   function Interaction(domElem){
       this.changeables = {};
