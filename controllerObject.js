@@ -37,6 +37,9 @@ define(['./eventEmitter'], function (broadcast) {
             }
           }
           break;
+        case 'undefined' :
+          self.setSwitch(self, 'default');
+          break;
       }
     }(self);
     this.children = function(self){
@@ -54,15 +57,14 @@ define(['./eventEmitter'], function (broadcast) {
     }(self);
     this.emitControls = function(){
       for(var item in self.control){
-        console.log(item+" "+self.control[item])
         self.events.emit('control-given', item, self.control[item])
       }
     };
 
   };
 
-  ControllerObject.prototype.setSwitch = function(scope){
-    var caseSwitch = scope.domListeners;
+  ControllerObject.prototype.setSwitch = function(scope, second){
+    var caseSwitch = second || scope.domListeners;
     switch(caseSwitch){
       case 'default':
         $(scope.dom).on('click', function(e){

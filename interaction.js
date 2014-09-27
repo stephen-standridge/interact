@@ -1,12 +1,12 @@
 
-define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./eventEmitter", "./simpleFunctions", "./conditionalContent", "./sceneMap", "./abstractRecord"], function(oneshot, toggleable, remote, broadcast, fun, condition, map, record) {
+define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./eventEmitter", "./simpleFunctions", "./conditionalContent", "./sceneMap", "./abstractRecord", "./complexClass", "./complexAttribute", "./complexContent"], function(oneshot, toggleable, remote, broadcast, fun, condition, map, AbstractRecord, ComplexClass, ComplexAttribute, ComplexContent) {
 
   function Interaction(domElem){
       this.changeables = {};
       this.currentScene = 0;
       this.currentSubscene = 0;
       this.type = '';
-      this.assertions = ["start"];
+      this.record;
       this.dom = domElem;
       this.probCalculable = null;
       this.subprobCalcuable = [];
@@ -19,22 +19,32 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
   };
   Interaction.prototype.initialize = function(){
     var self = this;
+
     this.controls = {
         start : function(context){
           self.sceneMap.initialize(self.totalScenes);
           self.totalEmptyScenes = self.sceneMap.totalEmptyScenes;
-          self.controls.redact('start')
+          self.record.redact('start')
           self.controls.forward();
         },
         forward : function(){
           if(self.currentScene === self.totalScenes){
-            switch(self.type){
+           var typeSwitch = self.type || 'linear';
+            switch(typeSwitch){
               case 'linear':
-                self.controls.assert('end')
+                self.record.assert('end')
+                self.record.report()
                 break;
               case 'loop':
-                self.currentScene = 1;
-                self.currentSubscene = 0;
+                if(fun.inArray('end', self.record.assertions)){
+                  self.record.reset();
+                  self.currentScene = 1;
+                  self.currentSubscene = 0;
+                } else {
+                  self.record.assert('end')
+                  self.record.report();
+                }
+
                 break;
               default :
                 break;
@@ -71,41 +81,19 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
           self.controls.updateAllContent();
         },
         assert : function(args){
-          if(typeof args == 'string'){
-            var isInArray = fun.inArray(args, self.assertions)
-            if( isInArray === false){
-              self.assertions.push(args)
-            }
-          }else{
-            for(var z=0; z<args.length; z++){
-              var isInArray = fun.inArray(args[z], self.assertions)
-              if( isInArray === false){
-                self.assertions.push(args[z])
-              }
-            }
-          }
-          self.controls.updateConditionalContent(self.assertions);
+          self.record.assert(args);
         },
         redact : function(args){
-          if(typeof args == 'string'){
-            var isInArray = fun.inArray(args, self.assertions)
-            if( isInArray === true){
-              var index = self.assertions.indexOf(args);
-              self.assertions.splice(index, 1)
-            }
-          }else{
-            for(var z=0; z<args.length; z++){
-              var isInArray = fun.inArray(args[z], self.assertions)
-              if( isInArray === true){
-                var index = self.assertions.indexOf(args[z]);
-                self.assertions.splice(index, 1)
-              }
-            }
-          }
-          self.controls.updateConditionalContent();
+          self.record.redact(args);
         },
-        approve : function(){
-
+        record : function(args){
+          self.record.record(args);
+        },
+        silent : function(args){
+          self.record.silent(args);
+        },
+        result : function(args){
+          self.record.result(args);
         },
         updateAllContent : function(){
           self.controls.updateDynamicContent();
@@ -132,7 +120,28 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
         },
         updateConditionalContent : function(){
           for( var current in self.changeables.conditionals ){
-            self.changeables.conditionals[current].dynamicClass(self.assertions);
+            self.changeables.conditionals[current].dynamicClass(self.record.assertions);
+          }
+        },
+        updateResultContent : function(){
+          self.controls.updateResultContents();
+          self.controls.updateResultClasses();
+          self.controls.updateResultAttributes();
+        },
+        updateResultClasses : function(){
+          for( var current in self.changeables.resultClass){
+
+            self.changeables.resultClass[current].dynamicClass(self.record.results)
+          }
+        },
+        updateResultAttributes : function(results){
+          for( var current in self.changeables.resultAttribute){
+            self.changeables.resultAttribute[current].dynamicClass(self.record.results)
+          }
+        },
+        updateResultContents : function(results){
+          for( var current in self.changeables.resultContent){
+            self.changeables.resultContent[current].dynamicClass(self.record.results)
           }
         }
       }
@@ -152,6 +161,12 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
       });
       this.events.on('probable', function(object){
         self.resetProbability(object);
+      })
+      this.events.on('list-updated', function(){
+        self.controls.updateConditionalContent();
+      })
+      this.events.on('record-totaled', function(){
+        self.controls.updateResultContent();
       })
 
 
@@ -182,8 +197,19 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
       }
       return calculatedProbability;
     }
+    this.record = function(self, type){
+      if(window.abstractions !== undefined){
+        var abstractions = window.abstractions;
+        var style = abstractions['record-style']
+      } else{
+        var abstractions = null;
+        var style = 'assert';
+      }
+        var returnedRecord = new AbstractRecord(abstractions, style, self.type);
+        returnedRecord.initialize();
+        return returnedRecord;
 
-
+    }(self);
     this.totalScenes = function(self){
         var total = self.dom.getAttribute('data-scenes');
                     self.dom.removeAttribute('data-scenes');
@@ -229,15 +255,18 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
 
 
     this.changeables = function(self){
-        var possibleChangeables = { appearance : [], content : [], conditionals : [], unsigned : []};
+        var possibleChangeables = { appearance : [], content : [], conditionals : [], unsigned : [], resultClass : [], resultAttribute : [], resultContent : []};
         var dynamicItems = $(self.dom).find('.dynamic');
         var dynamicContainer = $(self.dom).find('.dynamic-content');
         var conditionalItems = $(self.dom).find('.conditional');
+        var complexClasses = $(self.dom).find('.result-class');
+        var complexAttributes = $(self.dom).find('.result-attribute');
+        var complexContents = $(self.dom).find('.result-content');
         if( conditionalItems.length ){
           for( var j = 0; j< conditionalItems.length; j++ ){
             var conditionalChangeable = new condition(conditionalItems[j], conditionalItems[j].getAttribute("class"));
                 conditionalChangeable.initialize();
-                conditionalChangeable.dynamicClass(self.assertions);
+                conditionalChangeable.dynamicClass(self.record.assertions);
                 possibleChangeables.conditionals.push(conditionalChangeable);
           }
         } else { possibleChangeables.conditionals = [];}
@@ -260,6 +289,27 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
                 possibleChangeables.content.push(changeable);
           }
         }else { possibleChangeables.content = []; }
+        if( complexClasses.length ){
+          for(var l=0; l<complexClasses.length; l++){
+            var comClass = new ComplexClass(complexClasses[l])
+                comClass.initialize();
+                possibleChangeables.resultClass.push(comClass);
+          }
+        } else { possibleChangeables.resultClass = [];}
+        if( complexAttributes.length ){
+          for(var l=0; l<complexAttributes.length; l++){
+            var comAttr = new ComplexAttribute(complexAttributes[l])
+                comAttr.initialize();
+                possibleChangeables.resultAttribute.push(comAttr);
+          }
+        } else { possibleChangeables.resultAttribute = [];}
+        if( complexContents.length ){
+          for(var l=0; l<complexContents.length; l++){
+            var comCont = new ComplexContent(complexContents[l])
+                comCont.initialize();
+                possibleChangeables.resultContent.push(comCont);
+          }
+        } else { possibleChangeables.resultContent = [];}
         if(possibleChangeables.appearance === null && possibleChangeables.content === null && possibleChangeables.conditionals){
           return null;
         }else {
