@@ -22,12 +22,22 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
 
     this.controls = {
         start : function(context){
+          self.currentScene = 0;
+          self.currentSubscene = 0;
           self.sceneMap.initialize(self.totalScenes);
           self.totalEmptyScenes = self.sceneMap.totalEmptyScenes;
           self.record.redact('start')
           self.controls.forward();
         },
+        reset : function(context){
+          self.currentScene = 0;
+          self.currentSubscene = 0;
+          self.sceneMap.initialize(self.totalScenes);
+          self.totalEmptyScenes = self.sceneMap.totalEmptyScenes;
+          self.record.redact('start')
+        },
         forward : function(){
+          console.log(self.currentScene)
           if(self.currentScene === self.totalScenes){
            var typeSwitch = self.type || 'linear';
             switch(typeSwitch){
@@ -38,8 +48,7 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
               case 'loop':
                 if(fun.inArray('end', self.record.assertions)){
                   self.record.reset();
-                  self.currentScene = 1;
-                  self.currentSubscene = 0;
+                  self.controls.reset();
                 } else {
                   self.record.assert('end')
                   self.record.report();
@@ -50,17 +59,25 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
                 break;
             }
           }
-          if(self.sceneMap.map[self.currentScene] !== undefined){
-            if(typeof(self.sceneMap.map[self.currentScene]) == 'object' && self.currentSubscene < self.sceneMap.map[self.currentScene].length - 1){
-              self.currentSubscene++;
-            }else {
-              if(self.sceneMap.map[self.currentScene + 1]!== undefined){
-                self.currentScene++;
-                self.currentSubscene = 0;
-              }
-            }
+          switch(self.currentScene){
+            case 0 :
+            console.log(self.currentScene)
+              self.currentScene ++;
+              break;
+            default :
+            console.log(self.currentScene)
+              if(self.sceneMap.map[self.currentScene] !== undefined){
+                  if(typeof(self.sceneMap.map[self.currentScene]) == 'object' && self.currentSubscene < self.sceneMap.map[self.currentScene].length - 1){
+                    self.currentSubscene++;
+                  }else {
+                    if(self.sceneMap.map[self.currentScene + 1]!== undefined){
+                      self.currentScene++;
+                      self.currentSubscene = 0;
+                    }
+                  }
+                }
+              break;
           }
-          if(self.currentScene == 0){self.currentScene ++}
           self.controls.updateAllContent();
         },
         backward : function(){

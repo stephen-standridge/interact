@@ -1,9 +1,9 @@
-  function Interaction(domElem){
+function Interaction(domElem){
       this.changeables = {};
       this.currentScene = 0;
       this.currentSubscene = 0;
       this.type = '';
-      this.assertions = ["start"];
+      this.record;
       this.dom = domElem;
       this.probCalculable = null;
       this.subprobCalcuable = [];
@@ -16,38 +16,65 @@
   };
   Interaction.prototype.initialize = function(){
     var self = this;
+
     this.controls = {
         start : function(context){
+          self.currentScene = 0;
+          self.currentSubscene = 0;
           self.sceneMap.initialize(self.totalScenes);
           self.totalEmptyScenes = self.sceneMap.totalEmptyScenes;
-          self.controls.redact('start')
+          self.record.redact('start')
           self.controls.forward();
         },
+        reset : function(context){
+          self.currentScene = 0;
+          self.currentSubscene = 0;
+          self.sceneMap.initialize(self.totalScenes);
+          self.totalEmptyScenes = self.sceneMap.totalEmptyScenes;
+          self.record.redact('start')
+        },
         forward : function(){
+          console.log(self.currentScene)
           if(self.currentScene === self.totalScenes){
-            switch(self.type){
+           var typeSwitch = self.type || 'linear';
+            switch(typeSwitch){
               case 'linear':
-                self.controls.assert('end')
+                self.record.assert('end')
+                self.record.report()
                 break;
               case 'loop':
-                self.currentScene = 1;
-                self.currentSubscene = 0;
+                if(simpleFunctions.inArray('end', self.record.assertions)){
+                  self.record.reset();
+                  self.controls.reset();
+                } else {
+                  self.record.assert('end')
+                  self.record.report();
+                }
+
                 break;
               default :
                 break;
             }
           }
-          if(self.sceneMap.map[self.currentScene] !== undefined){
-            if(typeof(self.sceneMap.map[self.currentScene]) == 'object' && self.currentSubscene < self.sceneMap.map[self.currentScene].length - 1){
-              self.currentSubscene++;
-            }else {
-              if(self.sceneMap.map[self.currentScene + 1]!== undefined){
-                self.currentScene++;
-                self.currentSubscene = 0;
-              }
-            }
+          switch(self.currentScene){
+            case 0 :
+            console.log(self.currentScene)
+              self.currentScene ++;
+              break;
+            default :
+            console.log(self.currentScene)
+              if(self.sceneMap.map[self.currentScene] !== undefined){
+                  if(typeof(self.sceneMap.map[self.currentScene]) == 'object' && self.currentSubscene < self.sceneMap.map[self.currentScene].length - 1){
+                    self.currentSubscene++;
+                  }else {
+                    if(self.sceneMap.map[self.currentScene + 1]!== undefined){
+                      self.currentScene++;
+                      self.currentSubscene = 0;
+                    }
+                  }
+                }
+              break;
           }
-          if(self.currentScene == 0){self.currentScene ++}
           self.controls.updateAllContent();
         },
         backward : function(){
@@ -68,41 +95,19 @@
           self.controls.updateAllContent();
         },
         assert : function(args){
-          if(typeof args == 'string'){
-            var isInArray = simpleFunctions.inArray(args, self.assertions)
-            if( isInArray === false){
-              self.assertions.push(args)
-            }
-          }else{
-            for(var z=0; z<args.length; z++){
-              var isInArray = simpleFunctions.inArray(args[z], self.assertions)
-              if( isInArray === false){
-                self.assertions.push(args[z])
-              }
-            }
-          }
-          self.controls.updateConditionalContent(self.assertions);
+          self.record.assert(args);
         },
         redact : function(args){
-          if(typeof args == 'string'){
-            var isInArray = simpleFunctions.inArray(args, self.assertions)
-            if( isInArray === true){
-              var index = self.assertions.indexOf(args);
-              self.assertions.splice(index, 1)
-            }
-          }else{
-            for(var z=0; z<args.length; z++){
-              var isInArray = simpleFunctions.inArray(args[z], self.assertions)
-              if( isInArray === true){
-                var index = self.assertions.indexOf(args[z]);
-                self.assertions.splice(index, 1)
-              }
-            }
-          }
-          self.controls.updateConditionalContent();
+          self.record.redact(args);
         },
-        approve : function(){
-
+        record : function(args){
+          self.record.record(args);
+        },
+        silent : function(args){
+          self.record.silent(args);
+        },
+        result : function(args){
+          self.record.result(args);
         },
         updateAllContent : function(){
           self.controls.updateDynamicContent();
@@ -129,7 +134,28 @@
         },
         updateConditionalContent : function(){
           for( var current in self.changeables.conditionals ){
-            self.changeables.conditionals[current].dynamicClass(self.assertions);
+            self.changeables.conditionals[current].dynamicClass(self.record.assertions);
+          }
+        },
+        updateResultContent : function(){
+          self.controls.updateResultContents();
+          self.controls.updateResultClasses();
+          self.controls.updateResultAttributes();
+        },
+        updateResultClasses : function(){
+          for( var current in self.changeables.resultClass){
+
+            self.changeables.resultClass[current].dynamicClass(self.record.results)
+          }
+        },
+        updateResultAttributes : function(results){
+          for( var current in self.changeables.resultAttribute){
+            self.changeables.resultAttribute[current].dynamicClass(self.record.results)
+          }
+        },
+        updateResultContents : function(results){
+          for( var current in self.changeables.resultContent){
+            self.changeables.resultContent[current].dynamicClass(self.record.results)
           }
         }
       }
@@ -150,6 +176,12 @@
       this.events.on('probable', function(object){
         self.resetProbability(object);
       })
+      this.events.on('list-updated', function(){
+        self.controls.updateConditionalContent();
+      })
+      this.events.on('record-totaled', function(){
+        self.controls.updateResultContent();
+      })
 
 
       this.type = function(self){
@@ -159,7 +191,6 @@
     this.resetProbability = function(obj){
       this.changeables.appearance.push(obj);
       this.changeables.unsigned.splice(simpleFunctions.findObject(this.changeables.unsigned, obj, 'index'), 1);
-      console.table(self.changeables.unsigned)
       this.sceneMap.totalPossibleScenes--;
       this.probCalculable = 1;
       this.totalEmptyScenes--;
@@ -180,8 +211,19 @@
       }
       return calculatedProbability;
     }
+    this.record = function(self, type){
+      if(window.abstractions !== undefined){
+        var abstractions = window.abstractions;
+        var style = abstractions['record-style']
+      } else{
+        var abstractions = null;
+        var style = 'assert';
+      }
+        var returnedRecord = new AbstractRecord(abstractions, style, self.type);
+        returnedRecord.initialize();
+        return returnedRecord;
 
-
+    }(self);
     this.totalScenes = function(self){
         var total = self.dom.getAttribute('data-scenes');
                     self.dom.removeAttribute('data-scenes');
@@ -201,11 +243,10 @@
           $(allControls).each(function(a){
             var elem = allControls[a];
             var operand = $(elem).data('control').split("+")
-            for( var c=0; c<operand.length; c++){
               currentControls = {
                 tempdom : elem,
                 templistener : $(elem).data('control-listener'),
-                tempcontrol : operand[c],
+                tempcontrol : operand,
                 tempapprove : $(elem).data('confirm')
               }
               allControls[a].removeAttribute('data-control')
@@ -215,8 +256,7 @@
               var currentControl = new ControllerObject(currentControls.tempdom, currentControls.templistener, currentControls.tempcontrol, currentControls.tempapprove)
               currentControl.initialize();
               retrunedControls.push(currentControl);
-            }
-          });
+                      });
         }else{
           newController = new ControllerObject(self.dom, 'default', 'forward');
           newController.initialize();
@@ -229,15 +269,18 @@
 
 
     this.changeables = function(self){
-        var possibleChangeables = { appearance : [], content : [], conditionals : [], unsigned : []};
+        var possibleChangeables = { appearance : [], content : [], conditionals : [], unsigned : [], resultClass : [], resultAttribute : [], resultContent : []};
         var dynamicItems = $(self.dom).find('.dynamic');
         var dynamicContainer = $(self.dom).find('.dynamic-content');
         var conditionalItems = $(self.dom).find('.conditional');
+        var complexClasses = $(self.dom).find('.result-class');
+        var complexAttributes = $(self.dom).find('.result-attribute');
+        var complexContents = $(self.dom).find('.result-content');
         if( conditionalItems.length ){
           for( var j = 0; j< conditionalItems.length; j++ ){
             var conditionalChangeable = new ConditionalContent(conditionalItems[j], conditionalItems[j].getAttribute("class"));
                 conditionalChangeable.initialize();
-                conditionalChangeable.dynamicClass(self.assertions);
+                conditionalChangeable.dynamicClass(self.record.assertions);
                 possibleChangeables.conditionals.push(conditionalChangeable);
           }
         } else { possibleChangeables.conditionals = [];}
@@ -260,6 +303,27 @@
                 possibleChangeables.content.push(changeable);
           }
         }else { possibleChangeables.content = []; }
+        if( complexClasses.length ){
+          for(var l=0; l<complexClasses.length; l++){
+            var comClass = new ComplexClass(complexClasses[l])
+                comClass.initialize();
+                possibleChangeables.resultClass.push(comClass);
+          }
+        } else { possibleChangeables.resultClass = [];}
+        if( complexAttributes.length ){
+          for(var l=0; l<complexAttributes.length; l++){
+            var comAttr = new ComplexAttribute(complexAttributes[l])
+                comAttr.initialize();
+                possibleChangeables.resultAttribute.push(comAttr);
+          }
+        } else { possibleChangeables.resultAttribute = [];}
+        if( complexContents.length ){
+          for(var l=0; l<complexContents.length; l++){
+            var comCont = new ComplexContent(complexContents[l])
+                comCont.initialize();
+                possibleChangeables.resultContent.push(comCont);
+          }
+        } else { possibleChangeables.resultContent = [];}
         if(possibleChangeables.appearance === null && possibleChangeables.content === null && possibleChangeables.conditionals){
           return null;
         }else {
@@ -345,6 +409,22 @@
     var self = this;
     var tempClass = self.dom.getAttribute('class');
     var tempState = "";
+      // var theScene = this.appearances[scene];
+      // var theSubscene;
+      // if(theScene !== undefined){
+      //   var theSceneObject = self.appearances[scene];
+      //   for(var item in self.appearances[scene]){
+      //     var current = self.appearances[scene][item];
+      //     if(current[subscene] !== undefined ){
+      //       tempClass += current[subscene] == null ? "" :" "+current[subscene]
+      //       tempState.push(current[subscene])
+      //     }
+      //     if(current['all'] !== undefined) {
+      //       tempClass += current['all'] == null ? "" :" "+current['all']
+      //       tempState.push(current['all'])
+      //     }
+      //   }
+      // }
       for(var loopedScene in self.appearances){
         for(var loopedSubscene in self.appearances[loopedScene]){
           var current = self.appearances[loopedScene][loopedSubscene];
@@ -363,9 +443,16 @@
         }
       }
       tempClass += tempState;
+
+      //takes each class(set by the previous call to this function)and replaces it with nothing//
+
+      // for(var state in self.currentState){
+
+      //   tempClass = tempClass.replace(" "+self.currentState[state], "");
+      // }
       self.dom.setAttribute('class', tempClass);
-      self.dom.style.animationPlayState = 'running';
-      self.dom.style.webkitAnimationPlayState = 'running';
+      // self.dom.style.animationPlayState = 'running';
+      // self.dom.style.webkitAnimationPlayState = 'running';
       self.currentState = tempState;
       return tempClass
   }
@@ -381,8 +468,6 @@
       return false;
     }
   }
-
-
 
   function DynamicContent(parent){
     this.dom = parent;
@@ -477,6 +562,7 @@
 
 
 
+
   function TemporaryContent(domElement, defaultClass){
     this.dom = domElement;
     this.specialState = '';
@@ -505,7 +591,8 @@
   }
 
 
-  function ConditionalContent(DOMelem, classes){
+
+ function ConditionalContent(DOMelem, classes){
     this.dom = DOMelem;
     this.onClass = "";
     this.offClass = "";
@@ -574,6 +661,7 @@
 
 
 
+
   function ControllerObject(domElement, domListeners, control, approval /*, parentId*/){
     this.dom = domElement;
     this.children;
@@ -587,13 +675,16 @@
   };
 
   ControllerObject.prototype.initialize = function(){
+    ///need to make all controls on each element one object that cycles through and emits each control after approval//
     var self = this;
-    this.additional = function(self){
-      if(self.control.split(":").length > 1){
-        var returned = self.control.split(":")[1];
-        self.control = self.control.split(":")[0];
-        return returned;
+    this.control = function(self){
+      var returnedControl = {};
+      for(var i=0; i<self.control.length; i++){
+        var pref = self.control[i].split(":")[0];
+        var suff = self.control[i].split(":")[1] == undefined ? null : self.control[i].split(":")[1];
+        returnedControl[pref] = suff;
       }
+      return returnedControl;
     }(self);
     this.processedListeners = function(self){
       var caseSwitch = typeof self.domListeners;
@@ -607,6 +698,9 @@
               self.setSwitch(self);
             }
           }
+          break;
+        case 'undefined' :
+          self.setSwitch(self, 'default');
           break;
       }
     }(self);
@@ -623,31 +717,33 @@
         return null
       }
     }(self);
+    this.emitControls = function(){
+      for(var item in self.control){
+        self.events.emit('control-given', item, self.control[item])
+      }
+    };
 
   };
 
-  ControllerObject.prototype.setSwitch = function(scope){
-    var caseSwitch = scope.domListeners;
+  ControllerObject.prototype.setSwitch = function(scope, second){
+    var caseSwitch = second || scope.domListeners;
     switch(caseSwitch){
       case 'default':
         $(scope.dom).on('click', function(e){
-          // scope.events.emit('control-given', scope.control/*, add scope.parentid to it*/)
           e.preventDefault();
           var tempClass = scope.dom.getAttribute('class')
           if(scope.approval === undefined){
-            scope.events.emit('control-given', scope.control, scope.additional/*, add scope.parentid to it*/)
+            scope.emitControls();
             return true;
           } else {
             scope.dom.setAttribute('class', tempClass + " "+ scope.approval);
             $(scope.children['revoke']).on('click', function(){
               scope.dom.setAttribute('class', tempClass);
-              console.log('revoke')
               return false;
             });
             $(scope.children['confirm']).on('click', function(){
               scope.dom.setAttribute('class', tempClass);
-              scope.events.emit('control-given', scope.control, scope.additional/*, add scope.parentid to it*/)
-              console.log('confirm')
+              scope.emitControls();
               return false;
             })
           }
@@ -659,7 +755,7 @@
           e.preventDefault();
           var tempClass = scope.dom.getAttribute('class')
           if(scope.approval === undefined){
-            scope.events.emit('control-given', scope.control, scope.additional/*, add scope.parentid to it*/)
+            scope.emitControls();
             return true;
           } else {
             scope.dom.setAttribute('class', tempClass + " "+ scope.approval);
@@ -669,7 +765,7 @@
             });
             $(scope.children['confirm']).on(scope.domListeners, function(){
               scope.dom.setAttribute('class', tempClass);
-              scope.events.emit('control-given', scope.control, scope.additional/*, add scope.parentid to it*/)
+              scope.emitControls();
               return false;
             })
           }
@@ -785,6 +881,401 @@
       return this.map;
     }
 
+  function AbstractRecord(json, recordStyle, format, max, rollover){
+    this.abstractions = json || undefined;
+    this.format = format;
+    this.recordStyle = recordStyle;
+    this.maxAssertions = max || null;
+    this.count = 0;
+    this.assertionRollover = rollover || 'shift';
+    this.assertions = [];
+    this.list = [];
+    this.output;
+    this.results = {};
+    this.events = new EventEmitter();
+    return this;
+  };
+  AbstractRecord.prototype.initialize = function(){
+    var self = this;
+    this.assertions = function(format){
+      var formattedAssertions = [];
+      if(format == 'linear' || format === null || format === 'loop'){
+        formattedAssertions.push('start')
+      }
+      return formattedAssertions
+    }(self.format);
+    self.events.emit('list-updated');
+    this.output = function(self){
+      if(self.abstractions == undefined){
+        return null;
+      }
+      return self.abstractions['output'];
+    }(self);
+  }
+  AbstractRecord.prototype.process = function(arg, data){
+    var self = this;
+    var switchChoice = arg || self.recordStyle;
+    switch (switchChoice) {
+      case 'assert' :
+        var assertion = function(data){
+          if(typeof data == 'string'){
+            var isInArray = simpleFunctions.inArray(data, self.assertions)
+            if( isInArray === false){
+              self.assertions.push(data)
+            }
+            if(self.abstractions !== undefined && self.abstractions[data] !== undefined){
+              var obj = {}
+              obj[data] = self.abstractions[data];
+              self.list.push(obj);
+              self.list[self.list.length - 1]['operand'] = 'add';
+            }
+          }else{
+            for(var z=0; z<data.length; z++){
+              var isInArray = simpleFunctions.inArray(data[z], self.assertions)
+              if( isInArray === false){
+                self.assertions.push(data[z])
+              }
+              if(self.abstractions[data[z]] !== undefined){
+                var obj = {}
+                obj[data] = self.abstractions[data[z]];
+                self.list.push(obj);
+                self.list[self.list.length - 1]['operand'] = 'add';
+              }
+            }
+          }
+          self.count++;
+          self.events.emit('list-updated');
+        }(data);
+        break;
+      case 'redact' :
+        var redaction = function(data){
+          if(typeof data == 'string'){
+            var isInArray = simpleFunctions.inArray(data, self.assertions)
+            if( isInArray === true){
+              var index = self.assertions.indexOf(data);
+              self.assertions.splice(index, 1)
+            }
+            if(self.abstractions !== undefined && self.abstractions[data] !== undefined){
+              var obj = {}
+              obj[data] = self.abstractions[data];
+              self.list.push(obj);
+              self.list[self.list.length - 1]['operand'] = 'subtract';
+
+            }
+          }else{
+            for(var z=0; z<data.length; z++){
+              var isInArray = simpleFunctions.inArray(data[z], self.assertions)
+              if( isInArray === true){
+                var index = self.assertions.indexOf(data[z]);
+                self.assertions.splice(index, 1)
+              }
+              if(self.abstractions[data[z]] !== undefined){
+                var obj = {}
+                obj[data] = self.abstractions[data[z]];
+                self.list.push(obj);
+                self.list[self.list.length - 1]['operand'] = 'subtract';
+              }
+            }
+          }
+          self.count++;
+          self.events.emit('list-updated');
+        }(data);
+        break;
+      case 'silent' :
+        var silence = function(data){
+          if(typeof data == 'string'){
+            var isInArray = simpleFunctions.inArray(data, self.assertions)
+            if( isInArray === true){
+              var index = self.assertions.indexOf(data);
+              self.assertions.splice(index, 1)
+            } else {
+              self.assertions.push(data)
+            }
+            if(self.abstractions !== undefined && self.abstractions[data] !== undefined){
+              var obj = {}
+              obj[data] = self.abstractions[data];
+              self.list.push(obj);
+              self.list[self.list.length - 1]['operand'] = 'ignore';
+
+            }
+          }else{
+            for(var z=0; z<data.length; z++){
+              var isInArray = simpleFunctions.inArray(data[z], self.assertions)
+              if( isInArray === true){
+                var index = self.assertions.indexOf(data[z]);
+                self.assertions.splice(index, 1)
+              } else {
+                self.assertions.push(data[z])
+              }
+              if(self.abstractions[data[z]] !== undefined){
+                var obj = {}
+                obj[data] = self.abstractions[data[z]];
+                self.list.push(obj);
+                self.list[self.list.length - 1]['operand'] = 'ignore';
+              }
+
+            }
+          }
+        self.count++;
+        self.events.emit('list-updated');
+        }(data);
+        break
+    }
+
+  }
+  AbstractRecord.prototype.assert = function(data){
+    this.process('assert', data);
+  }
+  AbstractRecord.prototype.redact = function(data){
+    this.process('redact', data);
+  }
+  AbstractRecord.prototype.silent = function(data){
+    this.process('silent', data);
+  }
+  AbstractRecord.prototype.record = function(data){
+    this.process(false, data);
+  }
+  AbstractRecord.prototype.reset = function(){
+    this.list = [];
+    this.assertions = [];
+    this.count = 0;
+    this.results = {};
+    this.recordStyle = 'assert';
+  }
+
+
+  AbstractRecord.prototype.switchStyle = function(arg){
+    var self = this;
+    var toStyle = arg || 'toggle';
+    self.recordStyle = toStyle;
+  }
+  AbstractRecord.prototype.report = function(){
+    var self = this;
+    var outputValues = {};
+    var typeObject = {};
+    var rowObject = {};
+    var columnObject = {};
+    for(var output in self.output){
+      var itemizedValues = {};
+      var count = 0;
+
+      for(var n=0; n<self.list.length; n++){
+        for(var row in self.list[n]){
+        var itemOrOperand = self.list[n][row]
+        var operand = 1;
+        switch(self.list[n]['operand']){
+          case 'add' :
+            operand = 1;
+            break;
+          case 'subtract' :
+            operand = -1;
+            break;
+          case 'ignore' :
+            operand = 0;
+            break;
+        }
+        if(row !== 'operand'){
+          switch(output){
+            case 'unique_type' :
+              if(typeObject[itemOrOperand['type']] == undefined){
+                typeObject[itemOrOperand['type']] = [];
+              }
+              for(var value in itemOrOperand){
+                if(typeObject[itemOrOperand['type']][value] == undefined && value !== 'type'){
+                  typeObject[itemOrOperand['type']][value] = 0;
+                }
+                if(value !== 'type'){
+                  typeObject[itemOrOperand['type']][value] += itemOrOperand[value] * operand;
+                }
+              }
+              break;
+            case 'unique_row' :
+              if(rowObject[row] == undefined){
+                rowObject[row] = [];
+              }
+              for(var value in itemOrOperand){
+                if(rowObject[row][value] == undefined){
+                  rowObject[row][value] = typeof itemOrOperand[value] == 'string' ? itemOrOperand[value] : 0;
+                }
+                if(value !== 'type'){
+                  rowObject[row][value] += itemOrOperand[value] * operand;
+                }
+              }
+              break;
+            case 'unique_column' :
+              for(var value in itemOrOperand){
+                if(columnObject[value] == undefined && value !== 'type'){
+                  columnObject[value] = typeof itemOrOperand[value] == 'string' ? itemOrOperand[value] : 0;
+                }
+                if(value !== 'type'){
+                  columnObject[value] += itemOrOperand[value] * operand;
+                }
+              }
+              break;
+            case 'total' :
+              count ++;
+              break;
+            default :
+              if(outputValues[output] === undefined){
+                var customObject = {'name' : output, 'value' : ''};
+                var formula = self.output[output];
+              }
+              for(var value in itemOrOperand){
+                if(itemizedValues[value] == undefined && value !== 'type'){
+                  itemizedValues[value] = typeof itemOrOperand[value] == 'string' ? itemOrOperand[value] : 0;
+                }
+                if(value !== 'type'){
+                  itemizedValues[value] += itemOrOperand[value] * operand;
+                }
+              }
+              break;
+            }
+          }
+        }
+      }
+      if(formula !== undefined){
+        for(var item in itemizedValues){
+          formula = formula.replace(">>"+item, itemizedValues[item])
+        }
+        customObject['value'] = formula;
+        outputValues[customObject['name']] = customObject;
+      }
+    }
+    outputValues['types'] = typeObject || null;
+    outputValues['rows'] = rowObject || null;
+    outputValues['columns'] = columnObject || null;
+    outputValues['total'] = count || null;
+    self.results = outputValues;
+    self.events.emit('record-totaled', outputValues);
+
+    return outputValues
+  }
+
+  AbstractRecord.prototype.result = function(args){
+    var self = this;
+    var resultFunction = args || 'report';
+    switch(resultFunction){
+      case 'report' :
+        self.report();
+        break;
+      case 'assert' :
+        self.switchStyle(args);
+        break;
+      case 'redact' :
+        self.switchStyle(args);
+        break;
+      case 'silent' :
+        self.switchStyle(args);
+        break;
+      case 'toggle' :
+        self.switchStyle();
+        break;
+    }
+  }
+
+  function ComplexAttribute(DOMelem){
+    this.dom = DOMelem;
+    this.attributes;
+    this.events = new EventEmitter(self);
+    defaultEvents.animEnd(this);
+    return this;
+  };
+
+  ComplexAttribute.prototype.initialize = function(){
+    var self = this;
+    var initialSplit = self.dom.getAttribute('data-attribute').split(' ');
+    this.attributes = function(self){
+      var tempAttributes = {};
+      for(var q=0; q<initialSplit.length; q++){
+        var subSplit = initialSplit[q].split(':');
+        tempAttributes[subSplit[0]] = subSplit[1]
+      }
+      return tempAttributes;
+    }(self);
+    self.dom.removeAttribute('data-attribute');
+    self.events.emit('complex-attribute-initialized');
+  };
+
+  ComplexAttribute.prototype.dynamicClass = function(passed){
+    var self = this;
+    if( passed === undefined ){
+      return 'no arguments passed';
+    }else {
+      for(var attribute in self.attributes){
+        self.dom.style[attribute] =  passed[self.attributes[attribute]].value;
+      }
+      return 'success'
+    }
+  }
+   function ComplexClass(DOMelem){
+    this.dom = DOMelem;
+    this.sources;
+    this.startingClass;
+    this.events = new EventEmitter(self);
+    defaultEvents.animEnd(this);
+    return this;
+  };
+
+  ComplexClass.prototype.initialize = function(){
+    var self = this;
+    self.startingClass = self.dom.getAttribute('class');
+    this.sources = function(self){
+      var tempSource = self.dom.getAttribute('data-class').split(' ')
+      return tempSource;
+    }(self);
+    self.dom.removeAttribute('data-class');
+    self.events.emit('complex-class-initialized');
+  };
+
+  ComplexClass.prototype.dynamicClass = function(passed){
+    var self = this;
+    var tempClass = self.dom.getAttribute('class');
+    if( passed === undefined){
+      return tempClass;
+    }else {
+      for(var p=0; p<self.sources.length; p++){
+        tempClass += " "+passed[self.sources[p]];
+      }
+      self.dom.setAttribute('class', tempClass)
+      return tempClass
+    }
+  }
+  function ComplexContent(DOMelem){
+    this.dom = DOMelem;
+    this.containers;
+    this.events = new EventEmitter(self);
+    return this;
+  };
+
+  ComplexContent.prototype.initialize = function(){
+    var self = this;
+    var initialSplit = self.dom.getAttribute('data-content').split(' ');
+    this.containers = function(self){
+      var tempContainers = {};
+      for(var w=0; w<initialSplit.length; w++){
+        var subSplit = initialSplit[w].split(':');
+        var actualContainer = $(self.dom).find(subSplit[0]).each(function(b){
+          tempContainers[subSplit[1]] = this;
+        })
+        console.log(tempContainers)
+      }
+      return tempContainers
+    }(self);
+    self.dom.removeAttribute('data-content');
+    self.events.emit('complex-content-initialized');
+  };
+
+  ComplexContent.prototype.dynamicClass = function(passed){
+    var self = this;
+    if( passed === undefined ){
+      return 'no arguments passed';
+    }else {
+      for(var container in self.containers){
+        self.containers[container].innerHTML = passed[container].value;
+      }
+      return 'success'
+    }
+  }
 
 
   var animationEnd = function(scope){
@@ -879,8 +1370,6 @@
     shuffleArray : arrayShuffle,
     findObject : arrayFind,
   }
-
-
     var masterEmitter = new EventEmitter;
     var allTheInteractions =  function(){
       var possibleInteractions = document.getElementsByClassName('interaction');
