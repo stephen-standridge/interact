@@ -13,7 +13,7 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
       this.sceneMap = new map();
       this.totalScenes = null;
       this.events = new broadcast(self);
-      this.totalEmptyScenes = 0;
+      this.totalEmptyScenes = null;
       this.subtotalEmptyScenes = [];
       return this;
   };
@@ -37,7 +37,6 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
           self.record.redact('start')
         },
         forward : function(){
-          console.log(self.currentScene)
           if(self.currentScene === self.totalScenes){
            var typeSwitch = self.type || 'linear';
             switch(typeSwitch){
@@ -59,13 +58,12 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
                 break;
             }
           }
+
           switch(self.currentScene){
             case 0 :
-            console.log(self.currentScene)
               self.currentScene ++;
               break;
             default :
-            console.log(self.currentScene)
               if(self.sceneMap.map[self.currentScene] !== undefined){
                   if(typeof(self.sceneMap.map[self.currentScene]) == 'object' && self.currentSubscene < self.sceneMap.map[self.currentScene].length - 1){
                     self.currentSubscene++;
@@ -96,6 +94,9 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
             }
           }
           self.controls.updateAllContent();
+        },
+        custom : function(args){
+          args.call();
         },
         assert : function(args){
           self.record.assert(args);

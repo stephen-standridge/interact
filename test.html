@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Interaction tests</title>
+  <link rel="stylesheet" media="all" href="libs/mocha.css">
+</head>
+<body>
+    <div id="mocha"></div>
+    <div id="mochaDom"></div>
+    <script data-main="specRunner.js" src="./libs/require.js"></script>
+    <script id="basic_random" type="fixture" data-fixture-name="basic_random">
+        <section class="interaction" data-type="linear" data-scenes="5">
+          <div class="dynamic blue" data-scenemap="unsigned:visible">
+          </div>
+          <div class="dynamic red" data-scenemap="unsigned:visible">
+          </div>
+          <div class="dynamic green" data-scenemap="unsigned:visible">
+          </div>
+          <div class="dynamic orange" data-scenemap="unsigned:visible">
+          </div>
+          <div class="dynamic yellow" data-scenemap="unsigned:visible">
+          </div>
+          <div class="dynamic yellow" data-scenemap="unsigned:visible">
+          </div>
+          <div class="dynamic yellow" data-scenemap="unsigned:visible">
+          </div>
+          <div class="control conditional top" data-control="start" data-control-listener="click" data-condition="start:visible||invisible"> Click Me
+          </div>
+          <div class="control" data-control="forward" data-control-listener="click">
+          </div>
+        </section>
+    </script>
+    <script id="scene_subscene" type="fixture" data-fixture-name="scene_subscene">
+        <section class="interaction" data-type="linear" data-scenes="4">
+          <div class="dynamic blue" data-scenemap="1:visible">
+          </div>
+          <div class="dynamic red" data-scenemap="2:visible">
+          </div>
+          <div class="dynamic green" data-scenemap="1-1:visible">
+          </div>
+          <div class="dynamic orange" data-scenemap="1-2:visible">
+          </div>
+          <div class="dynamic yellow" data-scenemap="2-1:visible">
+          </div>
+          <div class="dynamic yellow" data-scenemap="2-all:visible">
+          </div>
+          <div class="dynamic yellow" data-scenemap="3:visible">
+          </div>
+          <div class="dynamic yellow" data-scenemap="4:visible">
+          </div>
+          <div class="control conditional top" data-control="start" data-control-listener="click" data-condition="start:visible||invisible"> Click Me
+          </div>
+          <div class="control" data-control="forward" data-control-listener="click">
+          </div>
+        </section>
+    </script>
+    <script id="basic_logic" type="fixture" data-fixture-name="basic_logic">
+        <section class="interaction" data-type="linear" data-scenes="0">
+          <div class="conditional blue" data-condition="yes:visible">
+          </div>
+          <div class="control conditional top" data-control="start" data-control-listener="click" data-condition="start:visible||invisible"> Click Me
+          </div>
+          <div class="control" data-control="forward" data-control-listener="click">
+          </div>
+          <div class="control" data-control="record:yes" data-control-listener="click">
+          </div>
+        </section>
+    </script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-require(["./interaction", "./eventEmitter"], function(game, broadcast) {
+define(["./interaction", "./eventEmitter"], function(game, broadcast) {
     var masterEmitter = new broadcast;
     var allTheInteractions =  function(){
       var possibleInteractions = document.getElementsByClassName('interaction');
@@ -9,8 +9,12 @@ require(["./interaction", "./eventEmitter"], function(game, broadcast) {
           parsedInteractions.push(currentInteraction);
       }
       return parsedInteractions;
-    }();
-    return allTheInteractions
-})();
+    };
+    var returnedObject = {
+      createInteractions : allTheInteractions,
+      masterEmitter : masterEmitter
+    }
+    return returnedObject
+});
 
 

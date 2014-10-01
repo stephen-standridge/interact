@@ -34,7 +34,7 @@ define(function () {
       }
     }
   }
-  throw "Couldn't find the object";
+  throw new Error("Couldn't find the "+ object +" in the source "+ source);
 }
 
 

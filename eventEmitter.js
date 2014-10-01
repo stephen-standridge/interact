@@ -23,6 +23,10 @@ define(function () {
         }
       }
     };
+  eventEmitter.prototype.clear = function(){
+    eventEmitter.prototype.events = Object.create(null);
+    return this.events;
+  };
 
   return eventEmitter
 });

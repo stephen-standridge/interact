@@ -12,6 +12,7 @@ define(['./simpleFunctions', './eventEmitter'], function (fun, broadcast) {
     this.sceneProbability = 0;
     this.subsceneProbability = [];
     this.events = new broadcast(this.self);
+    this.initialized = false;
     return this;
   }
 
@@ -20,6 +21,7 @@ define(['./simpleFunctions', './eventEmitter'], function (fun, broadcast) {
       this.totalScenes = totalScenes;
       this.map = this.fillSceneMap();
       this.map = this.reduceSceneMap();
+      this.initialized = true;
     }
 
     SceneMap.prototype.addToSceneMap = function(arg){
