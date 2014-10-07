@@ -1,0 +1,50 @@
+.dynamic{
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  height: 100%;
+  width: 100%;
+  opacity: 0;
+}
+.green{
+  background: green;
+}
+.red{
+  background: red;
+}
+.orange{
+  background: orange;
+}
+.blue{
+  background: blue;
+}
+.yellow{
+  background: yellow;
+}
+.visible{
+  opacity: 1;
+}
+.invisible{
+  opacity: 0;
+  display: none;
+}
+.control{
+  background: #cccccc;
+  height: 20%;
+  width: 100%;
+  position: absolute;
+  top: 80%;
+  left: 0px;
+}
+.top{
+  z-index: 5;
+}
+html{
+    -webkit-user-select: none;  /* Chrome all / Safari all */
+  -moz-user-select: none;     /* Firefox all */
+  -ms-user-select: none;      /* IE 10+ */
+
+  /* No support for these yet, use at own risk */
+  -o-user-select: none;
+  user-select: none;
+}

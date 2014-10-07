@@ -1,0 +1,49 @@
+ <html>
+  <head>
+    <link href="test_css/test3.css"rel="stylesheet" type="text/css"></link>
+      <script src="../libs/jquery-1.11.1.min.js"></script>
+      <script data-main="../autoengine.js" src="../libs/require.js"></script>
+  </head>
+  <body>
+    <section class="interaction__container interaction" data-scenes="1" data-type="loop">
+      <div class="forward">
+        <div class="conditional control reset" data-condition="end:visible||invisible" data-control="forward" data-control-listener="click">
+        Reset
+        </div>
+        <div class="control subtraction meta" data-control="assert:subtract+result:redact" data-control-listener="click">Subtraction</div>
+        <div class="control end meta" data-control="forward" data-control-listener="click">
+        Total
+        </div>
+        <div class="control addition meta" data-control="redact:subtract+result:assert" data-control-listener="click">Addition</div>
+      </div>
+      <script>
+        var abstractions = {
+              "record-style" : "assert",
+              "red"      : { "r" : 25, "g" :  0, "b" :  0, "type" : "rgb"},
+              "green"    : { "r" : 0 , "g" : 25, "b" :  0, "type" : "rgb"},
+              "blue"     : { "r" : 0 , "g" :  0, "b" : 25, "type" : "rgb"},
+              "cyan"     : { "r" : 0 , "g" : 25, "b" : 25, "type" : "rgb"},
+              "yellow"   : { "r" : 25, "g" : 25, "b" :  0, "type" : "rgb"},
+              "magenta"  : { "r" : 25, "g" :  0, "b" : 25, "type" : "rgb"},
+              "output"   : { "unique_type" : true, "unique_row" : true, "unique_column" :true, "custom" : 'rgb( >>r, >>g, >>b )', "total" : true}
+            };
+      </script>
+      <div class="control conditional start" data-control="start" data-control-listener="click" data-condition="start:visible||invisible">
+      Start Calculator
+      </div>
+      <div class="standard white class name dynamic" data-scenemap="1:visible">
+        <div class="control conditional red color" data-control="record:red" data-condition="subtract:subtract||add"> Red </div>
+        <div class="control conditional green color" data-control="record:green" data-condition="subtract:subtract||add"> Green </div>
+        <div class="control conditional blue color" data-control="record:blue" data-condition="subtract:subtract||add"> Blue</div>
+        <div class="control conditional yellow color" data-control="record:yellow" data-condition="subtract:subtract||add"> Yellow </div>
+        <div class="control conditional magenta color" data-control="record:magenta" data-condition="subtract:subtract||add"> Magenta</div>
+        <div class="control conditional cyan color" data-control="record:cyan" data-condition="subtract:subtract||add"> Cyan </div>
+      </div>
+      <div class="result result-attribute result-class result-content conditional" data-condition="end:visible||invisible" data-attribute="background:custom" data-content=".output:custom" data-class="total" >
+        <div class="output">
+        </div>
+      </div>
+
+    </section>
+  </body>
+</html>

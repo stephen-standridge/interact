@@ -1,7 +1,6 @@
 define(function(require) {
 
   describe('Interaction', function() {
-    this.timeout(1500000);
 
     function start_game() {
       var engine = require('engine');

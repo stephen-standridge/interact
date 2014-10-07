@@ -6,7 +6,7 @@ define(['./defaultListeners', './eventEmitter'], function (defaults, broadcast) 
     this.currentState = [];
     this.defaultClass = defaultClass;
     this.events = new broadcast(self);
-    this.unsigned = false;
+    this.unassigned = false;
     defaults.animEnd(this);
     return this;
   };
@@ -28,21 +28,21 @@ define(['./defaultListeners', './eventEmitter'], function (defaults, broadcast) 
             scene_subscene = pref.split('-');
             pref = isNaN(Number(scene_subscene[0])) == false ? Number(scene_subscene[0]) : scene_subscene[0];
             value = isNaN(Number(splitscenemap[1])) == false ? Number(splitscenemap[1]) : splitscenemap[1]
-            //replace subscene with 'all' or 'unsigned' if not a numerical value
+            //replace subscene with 'all' or 'unassigned' if not a numerical value
             if(isNaN(Number(scene_subscene[1])) == true){
-              // suff = scene_subscene[1] == 'all' ? 'all' : 'unsigned'
+              // suff = scene_subscene[1] == 'all' ? 'all' : 'unassigned'
               suff = 'all'
-              self.unsigned = scene_subscene[0] == 'all' ? false : true
+              self.unassigned = scene_subscene[0] == 'all' ? false : true
               obj[suff] = value;
             } else {
               suff = Number(scene_subscene[1]);
               obj[suff] = value;
             }
 
-            //replace scene with unsigned, if not a numerical value
+            //replace scene with unassigned, if not a numerical value
             if(isNaN(Number(pref))){
-              pref = 'unsigned';
-              self.unsigned = true;
+              pref = 'unassigned';
+              self.unassigned = true;
             }else{
               pref = Number(pref)
             }
@@ -55,8 +55,8 @@ define(['./defaultListeners', './eventEmitter'], function (defaults, broadcast) 
             returnedHash[pref].push(obj);
             self.events.emit('dynamic-appearance-initialized', [pref, suff]);
 
-            if( pref == 'unsigned' || suff == 'unsigned'){
-              self.events.emit('unsigned-element', [pref, suff]);
+            if( pref == 'unassigned' || suff == 'unassigned'){
+              self.events.emit('unassigned-element', [pref, suff]);
             }
           }
 
@@ -124,8 +124,8 @@ define(['./defaultListeners', './eventEmitter'], function (defaults, broadcast) 
   DynamicAppearance.prototype.determineProbability = function(scene, subscene, probability){
     var actuality = Math.random()
     if( actuality < probability){
-      this.appearances[scene] = this.appearances['unsigned']
-      delete this.appearances['unsigned'];
+      this.appearances[scene] = this.appearances['unassigned']
+      delete this.appearances['unassigned'];
       this.dynamicClass(scene, subscene)
       this.events.emit('probable', this)
       return true;

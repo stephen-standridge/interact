@@ -1,0 +1,38 @@
+<html>
+  <head>
+    <link href="test_css/test2.css"rel="stylesheet" type="text/css"></link>
+
+      <script src="../libs/jquery-1.11.1.min.js"></script>
+      <script data-main="../autoengine.js" src="../libs/require.js"></script>
+  </head>
+  <body>
+    <section class="interaction__container interaction" data-scenes="5" data-type="loop">
+      <div class="control" data-control="forward" data-control-listener="click">
+      </div>
+      <div class="control conditional gray" data-control="start" data-control-listener="click" data-condition="start:visible||invisible">
+      Click To Start
+      </div>
+      <div class="control conditional gray" data-control="forward" data-control-listener="click" data-condition="end:visible||invisible">
+      Click To Re-Start
+      </div>
+      <div class="standard blue class name dynamic" data-scenemap="unsigned:visible">
+        <div class='indicator first bl'></div>
+      </div>
+      <div class="yellow dynamic" data-scenemap="unsigned:visible">
+        <div class="indicator second ye"></div>
+      </div>
+      <div class="red dynamic" data-scenemap="unsigned:visible">
+        <div class="indicator third re"> </div>
+      </div>
+      <div class="green dynamic" data-scenemap="unsigned:visible">
+        <div class="indicator fourth ge"></div>
+      </div>
+      <div class="gray dynamic" data-scenemap="5:visible">
+        <div class="indicator fifth gr"></div>
+
+      This is always the last screen
+      </div>
+
+    </section>
+  </body>
+</html>

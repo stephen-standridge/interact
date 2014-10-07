@@ -1,0 +1,196 @@
+div{
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+}
+html{
+    -webkit-user-select: none;  /* Chrome all / Safari all */
+  -moz-user-select: none;     /* Firefox all */
+  -ms-user-select: none;      /* IE 10+ */
+
+  /* No support for these yet, use at own risk */
+  -o-user-select: none;
+  user-select: none;
+  text-transform: uppercase;
+  font-family:'ProximaNova-Semibold';
+  letter-spacing: 1px;
+}
+.control{
+    border: 10px solid transparent;
+    text-align: center;
+}
+.meta{
+  padding-top: 10%;
+}
+.yellow{
+  height: 40%;
+  width: 33%;
+  position: relative;
+  float: left;
+  position: relative;
+  float: left;
+  color: rgba(255, 255, 0, 1);
+  background: rgba(255, 255, 0, .5);
+}
+.green{
+  height: 40%;
+  width: 34%;
+  position: relative;
+  float: left;
+  color: rgba(0, 255, 0, 1);
+  background: rgba(0, 255, 0, .5);
+}
+.red{
+  height: 40%;
+  width: 33%;
+  position: relative;
+  float: left;
+  color: rgba(255, 0, 0, 1);
+  background: rgba(255, 0, 0, .5);
+}
+.blue{
+  height: 40%;
+  width: 33%;
+  position: relative;
+  float: left;
+  color: rgba(0, 0, 255, 1);
+  background: rgba(0, 0, 255, .5);
+}
+.cyan{
+  height: 40%;
+  width: 33%;
+  position: relative;
+  float: left;
+  color: rgba(0, 255, 255, 1);
+  background: rgba(0, 255, 255, .5);
+}
+.magenta{
+  height: 40%;
+  width: 34%;
+  position: relative;
+  float: left;
+  color: rgba(255, 0, 255, 1);
+  background: rgba(255, 0, 255, .5);
+}
+.white{
+  height: 100%;
+  width: 100%;
+  background: white;
+}
+.dynamic{
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  opacity: 0;
+}
+.result{
+  height: 80%;
+  width: 100%;
+  background: black;
+  z-index: 5;
+}
+
+.visible{
+  opacity: 1;
+  display: block;
+}
+
+.start{
+  padding-top: 50%;
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  background: gray;
+
+}
+.conditional{
+  z-index: 10;
+}
+.result{
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  z-index: 11;
+}
+.invisible{
+  display: none;
+}
+.output{
+  width: 100%;
+  text-align: center;
+  height: 100%;
+  color: white;
+  padding-top: 50%;
+}
+.forward{
+  width: 100%;
+  position: absolute;
+  height: 20%;
+  bottom: 0px;
+  left: 0px;
+  z-index: 3;
+}
+.end{
+  height: 100%;
+  width: 34%;
+  position: relative;
+  float: left;
+  color: rgba(122, 122, 122, 1);
+
+  background: rgba(168, 168, 168, 1);
+}
+.addition{
+  height: 100%;
+  width: 33%;
+  position: relative;
+  float: left;
+  color: rgba(168, 168, 168, 1);
+  background: rgba(211, 211, 211, 1);
+}
+.subtraction{
+  height: 100%;
+  width: 33%;
+  position: relative;
+  float: left;
+  color: rgba(168, 168, 168, 1);
+  background: rgba(122, 122, 122, 1);
+}
+.color.add:before{
+  content: 'add';
+}
+.color:active, .meta:active, .start:active, .reset:active{
+  text-shadow: 2px 1px 2px rgba(0,0,0, .6);
+  -webkit-text-shadow: 2px 1px 2px rgba(0,0,0, .6);
+   -webkit-box-shadow: inset 0 0 6px #000000;
+   box-shadow:         inset 0 0 6px #000000;
+}
+.color, .meta, .start, .reset{
+   transition: box-shadow .2s, text-shadow .2s;
+  -webkit-transition: box-shadow .2s, text-shadow .2s;
+
+}
+.reset{
+  z-index: 12;
+  color: rgba(122, 122, 122, 1);
+  background: rgba(168, 168, 168, 1);
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  padding-top: 10%;
+}
+.color{
+   padding-top: 20%;
+}
+.color:hover, .meta:hover, .start:hover, .reset:hover{
+  cursor: pointer;
+}
+.color:before{
+  width: 100%;
+  max-width: 100%;
+  background: transparent;
+  height: 10%;
+}
+.color.subtract:before{
+  content: 'subtract';
+}

@@ -35,16 +35,16 @@ define(['./temporaryContent', './eventEmitter', './defaultListeners'], function 
 
           if( isNaN(Number(scene_subscene)) ){
             scene_subscene = tempscenemap[0].split('-');
-            //replace subscene with 'all' or 'unsigned' if not a numerical value
+            //replace subscene with 'all' or 'unassigned' if not a numerical value
             if(isNaN(Number(scene_subscene[1])) == true){
-              suff = scene_subscene[1] == 'all' ? 'all' : 'unsigned'
+              suff = scene_subscene[1] == 'all' ? 'all' : 'unassigned'
             } else {
               suff = Number(scene_subscene[1]);
             }
 
-            //replace scene with unsigned, if not a numerical value
+            //replace scene with unassigned, if not a numerical value
             if(isNaN(Number(scene_subscene[0]))){
-              pref = 'unsigned';
+              pref = 'unassigned';
             }else{
               pref = Number(scene_subscene[0])
             }
@@ -64,8 +64,8 @@ define(['./temporaryContent', './eventEmitter', './defaultListeners'], function 
         current.removeAttribute('data-scenemap');
         returnedArray[pref][suff].push(currentObj)
         self.events.emit('dynamic-content-initialized', [pref, suff]);
-        if( pref == 'unsigned' || suff == 'unsigned'){
-          self.events.emit('unsigned-element', [pref, suff]);
+        if( pref == 'unassigned' || suff == 'unassigned'){
+          self.events.emit('unassigned-element', [pref, suff]);
         }
       }
       self.dom.removeAttribute('data-scenemap');
@@ -80,7 +80,7 @@ define(['./temporaryContent', './eventEmitter', './defaultListeners'], function 
           var temporaryItems = scenes[scene][subscene];
           for(var item in temporaryItems){
 
-///if logic for unsigned scenes/subscenes///
+///if logic for unassigned scenes/subscenes///
                 var obj = temporaryItems[item]
                 element = obj.dom;
                 classFrom = obj.defaultClass;

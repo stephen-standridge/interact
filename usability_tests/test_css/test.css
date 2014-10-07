@@ -1,0 +1,62 @@
+html{
+    -webkit-user-select: none;  /* Chrome all / Safari all */
+  -moz-user-select: none;     /* Firefox all */
+  -ms-user-select: none;      /* IE 10+ */
+
+  /* No support for these yet, use at own risk */
+  -o-user-select: none;
+  user-select: none;
+  color: white;
+}
+.control{
+height: 100%;
+max-height: 100%;
+width: 30%;
+float: left;
+  background: blue;
+position: relative;
+}
+.controls{
+  height: 20%;
+}
+.standard{
+  height: 80%;
+}
+.green{
+  background: green;
+}
+.yellow .inner{
+  background: yellow;
+}
+.red .inner{
+  background: red;
+}
+.inner{
+  height: 50%;
+  width: 50%;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: auto;
+  margin-bottom: auto;
+}
+.blue{
+  background: blue;
+}
+
+.control .approve{
+  opacity: 0;
+  height: inherit;
+  width: 50%;
+  float: left;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  background: red;
+  z-index: 2;
+}
+.control .approve:nth-child(even){
+  left: 50%;
+}
+.control.approve .approve{
+  opacity: 1;
+}

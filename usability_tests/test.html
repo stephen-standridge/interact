@@ -1,0 +1,32 @@
+<html>
+  <head>
+    <link href="test_css/test.css"rel="stylesheet" type="text/css"></link>
+
+      <script src="../libs/jquery-1.11.1.min.js"></script>
+      <script data-main="../autoengine.js" src="../libs/require.js"></script>
+  </head>
+  <body>
+    <section class="interaction__container interaction" data-scenes="10">
+
+      <div class="standard class name conditional" data-condition="blueness:blue||green redness:red||yellow">
+        <div class="inner"></div>
+      </div>
+      <div class="controls">
+      <div class="control" data-control="assert:blueness" data-control-listener="click">
+        Make Blue
+      </div>
+      <div class="control" data-control="redact:blueness" data-control-listener="click">
+        Make Not Blue
+      </div>
+      <div class="control" data-control="assert:redness" data-control-listener="click" data-confirm="approve">
+        Make Red
+        <div class="approve" data-control="confirm"> confirm</div>
+        <div class="approve" data-control="revoke"> revoke</div>
+      </div>
+      </div>
+    </section>
+    <script>
+
+    </script>
+  </body>
+</html>

@@ -127,9 +127,9 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
           for( var current in self.changeables.appearance ){
             self.changeables.appearance[current].dynamicClass(self.currentScene, self.currentSubscene);
           }
-          if(self.sceneMap.map[self.currentScene] == 'unsigned'){
-            for( var current in self.changeables.unsigned){
-              var check = self.changeables.unsigned[current].determineProbability(self.currentScene, self.currentSubscene, self.probability())
+          if(self.sceneMap.map[self.currentScene] == 'unassigned'){
+            for( var current in self.changeables.unassigned){
+              var check = self.changeables.unassigned[current].determineProbability(self.currentScene, self.currentSubscene, self.probability())
               if(check === true){
                 break;
               }
@@ -170,8 +170,8 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
       this.events.on('dynamic-appearance-initialized', function(data){
         self.sceneMap.addToSceneMap(data);
       });
-      this.events.on('unsigned-element', function(data){
-        self.sceneMap.addToUnsigned(data);
+      this.events.on('unassigned-element', function(data){
+        self.sceneMap.addToUnassigned(data);
       })
       this.events.on('control-given', function(control, additional){
         ///check if emitted id matches its id
@@ -194,11 +194,11 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
       }(self);
     this.resetProbability = function(obj){
       this.changeables.appearance.push(obj);
-      this.changeables.unsigned.splice(fun.findObject(this.changeables.unsigned, obj, 'index'), 1);
+      this.changeables.unassigned.splice(fun.findObject(this.changeables.unassigned, obj, 'index'), 1);
       this.sceneMap.totalPossibleScenes--;
       this.probCalculable = 1;
       this.totalEmptyScenes--;
-      this.changeables.unsigned = fun.shuffleArray(this.changeables.unsigned);
+      this.changeables.unassigned = fun.shuffleArray(this.changeables.unassigned);
     }
 
     this.probability = function(){
@@ -273,7 +273,7 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
 
 
     this.changeables = function(self){
-        var possibleChangeables = { appearance : [], content : [], conditionals : [], unsigned : [], resultClass : [], resultAttribute : [], resultContent : []};
+        var possibleChangeables = { appearance : [], content : [], conditionals : [], unassigned : [], resultClass : [], resultAttribute : [], resultContent : []};
         var dynamicItems = $(self.dom).find('.dynamic');
         var dynamicContainer = $(self.dom).find('.dynamic-content');
         var conditionalItems = $(self.dom).find('.conditional');
@@ -293,8 +293,8 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
           for( var j = 0; j< dynamicItems.length; j++ ){
             var appearanceChangeable = new oneshot(dynamicItems[j], dynamicItems[j].getAttribute("class"));
                 appearanceChangeable.initialize();
-                if(appearanceChangeable.unsigned === true ){
-                  possibleChangeables.unsigned.push(appearanceChangeable);
+                if(appearanceChangeable.unassigned === true ){
+                  possibleChangeables.unassigned.push(appearanceChangeable);
                 }else {
                   possibleChangeables.appearance.push(appearanceChangeable);
                 }

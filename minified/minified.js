@@ -123,9 +123,9 @@ function Interaction(domElem){
           for( var current in self.changeables.appearance ){
             self.changeables.appearance[current].dynamicClass(self.currentScene, self.currentSubscene);
           }
-          if(self.sceneMap.map[self.currentScene] == 'unsigned'){
-            for( var current in self.changeables.unsigned){
-              var check = self.changeables.unsigned[current].determineProbability(self.currentScene, self.currentSubscene, self.probability())
+          if(self.sceneMap.map[self.currentScene] == 'unassigned'){
+            for( var current in self.changeables.unassigned){
+              var check = self.changeables.unassigned[current].determineProbability(self.currentScene, self.currentSubscene, self.probability())
               if(check === true){
                 break;
               }
@@ -166,8 +166,8 @@ function Interaction(domElem){
       this.events.on('dynamic-appearance-initialized', function(data){
         self.sceneMap.addToSceneMap(data);
       });
-      this.events.on('unsigned-element', function(data){
-        self.sceneMap.addToUnsigned(data);
+      this.events.on('unassigned-element', function(data){
+        self.sceneMap.addToUnassigned(data);
       })
       this.events.on('control-given', function(control, additional){
         ///check if emitted id matches its id
@@ -190,11 +190,11 @@ function Interaction(domElem){
       }(self);
     this.resetProbability = function(obj){
       this.changeables.appearance.push(obj);
-      this.changeables.unsigned.splice(simpleFunctions.findObject(this.changeables.unsigned, obj, 'index'), 1);
+      this.changeables.unassigned.splice(simpleFunctions.findObject(this.changeables.unassigned, obj, 'index'), 1);
       this.sceneMap.totalPossibleScenes--;
       this.probCalculable = 1;
       this.totalEmptyScenes--;
-      this.changeables.unsigned = simpleFunctions.shuffleArray(this.changeables.unsigned);
+      this.changeables.unassigned = simpleFunctions.shuffleArray(this.changeables.unassigned);
     }
 
     this.probability = function(){
@@ -269,7 +269,7 @@ function Interaction(domElem){
 
 
     this.changeables = function(self){
-        var possibleChangeables = { appearance : [], content : [], conditionals : [], unsigned : [], resultClass : [], resultAttribute : [], resultContent : []};
+        var possibleChangeables = { appearance : [], content : [], conditionals : [], unassigned : [], resultClass : [], resultAttribute : [], resultContent : []};
         var dynamicItems = $(self.dom).find('.dynamic');
         var dynamicContainer = $(self.dom).find('.dynamic-content');
         var conditionalItems = $(self.dom).find('.conditional');
@@ -289,8 +289,8 @@ function Interaction(domElem){
           for( var j = 0; j< dynamicItems.length; j++ ){
             var appearanceChangeable = new DynamicAppearance(dynamicItems[j], dynamicItems[j].getAttribute("class"));
                 appearanceChangeable.initialize();
-                if(appearanceChangeable.unsigned === true ){
-                  possibleChangeables.unsigned.push(appearanceChangeable);
+                if(appearanceChangeable.unassigned === true ){
+                  possibleChangeables.unassigned.push(appearanceChangeable);
                 }else {
                   possibleChangeables.appearance.push(appearanceChangeable);
                 }
@@ -341,7 +341,7 @@ function Interaction(domElem){
     this.currentState = [];
     this.defaultClass = defaultClass;
     this.events = new EventEmitter(self);
-    this.unsigned = false;
+    this.unassigned = false;
     defaultEvents.animEnd(this);
     return this;
   };
@@ -363,21 +363,21 @@ function Interaction(domElem){
             scene_subscene = pref.split('-');
             pref = isNaN(Number(scene_subscene[0])) == false ? Number(scene_subscene[0]) : scene_subscene[0];
             value = isNaN(Number(splitscenemap[1])) == false ? Number(splitscenemap[1]) : splitscenemap[1]
-            //replace subscene with 'all' or 'unsigned' if not a numerical value
+            //replace subscene with 'all' or 'unassigned' if not a numerical value
             if(isNaN(Number(scene_subscene[1])) == true){
-              // suff = scene_subscene[1] == 'all' ? 'all' : 'unsigned'
+              // suff = scene_subscene[1] == 'all' ? 'all' : 'unassigned'
               suff = 'all'
-              self.unsigned = scene_subscene[0] == 'all' ? false : true
+              self.unassigned = scene_subscene[0] == 'all' ? false : true
               obj[suff] = value;
             } else {
               suff = Number(scene_subscene[1]);
               obj[suff] = value;
             }
 
-            //replace scene with unsigned, if not a numerical value
+            //replace scene with unassigned, if not a numerical value
             if(isNaN(Number(pref))){
-              pref = 'unsigned';
-              self.unsigned = true;
+              pref = 'unassigned';
+              self.unassigned = true;
             }else{
               pref = Number(pref)
             }
@@ -390,8 +390,8 @@ function Interaction(domElem){
             returnedHash[pref].push(obj);
             self.events.emit('dynamic-appearance-initialized', [pref, suff]);
 
-            if( pref == 'unsigned' || suff == 'unsigned'){
-              self.events.emit('unsigned-element', [pref, suff]);
+            if( pref == 'unassigned' || suff == 'unassigned'){
+              self.events.emit('unassigned-element', [pref, suff]);
             }
           }
 
@@ -459,8 +459,8 @@ function Interaction(domElem){
   DynamicAppearance.prototype.determineProbability = function(scene, subscene, probability){
     var actuality = Math.random()
     if( actuality < probability){
-      this.appearances[scene] = this.appearances['unsigned']
-      delete this.appearances['unsigned'];
+      this.appearances[scene] = this.appearances['unassigned']
+      delete this.appearances['unassigned'];
       this.dynamicClass(scene, subscene)
       this.events.emit('probable', this)
       return true;
@@ -497,16 +497,16 @@ function Interaction(domElem){
 
           if( isNaN(Number(scene_subscene)) ){
             scene_subscene = tempscenemap[0].split('-');
-            //replace subscene with 'all' or 'unsigned' if not a numerical value
+            //replace subscene with 'all' or 'unassigned' if not a numerical value
             if(isNaN(Number(scene_subscene[1])) == true){
-              suff = scene_subscene[1] == 'all' ? 'all' : 'unsigned'
+              suff = scene_subscene[1] == 'all' ? 'all' : 'unassigned'
             } else {
               suff = Number(scene_subscene[1]);
             }
 
-            //replace scene with unsigned, if not a numerical value
+            //replace scene with unassigned, if not a numerical value
             if(isNaN(Number(scene_subscene[0]))){
-              pref = 'unsigned';
+              pref = 'unassigned';
             }else{
               pref = Number(scene_subscene[0])
             }
@@ -526,8 +526,8 @@ function Interaction(domElem){
         current.removeAttribute('data-scenemap');
         returnedArray[pref][suff].push(currentObj)
         self.events.emit('dynamic-content-initialized', [pref, suff]);
-        if( pref == 'unsigned' || suff == 'unsigned'){
-          self.events.emit('unsigned-element', [pref, suff]);
+        if( pref == 'unassigned' || suff == 'unassigned'){
+          self.events.emit('unassigned-element', [pref, suff]);
         }
       }
       self.dom.removeAttribute('data-scenemap');
@@ -542,7 +542,7 @@ function Interaction(domElem){
           var temporaryItems = scenes[scene][subscene];
           for(var item in temporaryItems){
 
-///if logic for unsigned scenes/subscenes///
+///if logic for unassigned scenes/subscenes///
                 var obj = temporaryItems[item]
                 element = obj.dom;
                 classFrom = obj.defaultClass;
@@ -813,14 +813,14 @@ function Interaction(domElem){
         }
       }
     }//only constructs an array of scene : [subscene, subscene, subscene]
-    SceneMap.prototype.addToUnsigned = function(arg){
+    SceneMap.prototype.addToUnassigned = function(arg){
       if(arg !== undefined){
         pref = arg[0];
         suff = arg[1];
-        if(pref == 'unsigned'){
+        if(pref == 'unassigned'){
           this.totalPossibleScenes += 1;
         }
-        if(suff == 'unsigned'){
+        if(suff == 'unassigned'){
           if(this.subtotalPossibleScenes[pref] == undefined){
             this.subtotalPossibleScenes[pref] = 0;
           }
@@ -848,7 +848,7 @@ function Interaction(domElem){
       if(scenesToAdd > 0){ ///add scenes to the map to fill///
         for(var g=1; g<=this.totalScenes; g++){
           if(this.map[g] === undefined ){
-            this.map[g] = 'unsigned';
+            this.map[g] = 'unassigned';
             this.totalEmptyScenes += 1;
           }
         }
@@ -859,7 +859,7 @@ function Interaction(domElem){
       } else {
         for (var g=1; g<=sceneCount; g++){
           if(this.map[g] === undefined){
-            this.map[g] = 'unsigned';
+            this.map[g] = 'unassigned';
             this.totalEmptyScenes += 1;
           }
         }
@@ -871,7 +871,7 @@ function Interaction(domElem){
           var maxSubscene = this.map[h][length];
           for(var q=0; q<maxSubscene; q++){
             if(this.map[h][q] === undefined){
-              this.map[h][q] = 'unsigned';
+              this.map[h][q] = 'unassigned';
               if(this.subtotalEmptyScenes[h] == undefined){ this.subtotalEmptyScenes[h] = 0}
                 this.subtotalEmptyScenes[h]+= 1;
             }
