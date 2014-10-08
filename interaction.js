@@ -58,7 +58,6 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
                 break;
             }
           }
-
           switch(self.currentScene){
             case 0 :
               self.currentScene ++;
@@ -77,6 +76,7 @@ define(["./dynamicAppearance", "./dynamicContent", "./controllerObject", "./even
               break;
           }
           self.controls.updateAllContent();
+
         },
         backward : function(){
           if(self.currentScene > 0){

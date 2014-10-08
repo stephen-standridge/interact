@@ -10,6 +10,7 @@ define(["./interaction", "./eventEmitter"], function(game, broadcast) {
       }
       return parsedInteractions;
     }();
+    console.log(allTheInteractions)
     return allTheInteractions
 
 });

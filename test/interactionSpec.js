@@ -150,6 +150,13 @@ define(function(require) {
                     expect(this.game[0].currentSubscene).to.equal(correctSubscene)
               })
             });
+            describe('when the scene is the last', function(){
+              it("does not update content when the scene does not change or it is not the end", function(){
+                  expect(true).to.equal(false)
+                  ///this is broken, look at usability_tests/test4 for example///
+                  ///can be worked around by making the forward control conditional, but shouldn't have to be explicit///
+              })
+            });
           });
           describe('#backward', function(){
             beforeEach(function(){
