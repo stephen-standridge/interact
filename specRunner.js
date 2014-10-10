@@ -6,7 +6,8 @@ require.config({
     'chai'          : './libs/chai',
     'eventEmitter'  : 'eventEmitter',
     'engine'        : 'engine',
-    'scenemap'      : 'sceneMap'
+    'scenemap'      : 'sceneMap',
+    'changeableObject'    : 'changeableObject'
   },
   shim: {
     mocha: {
@@ -30,6 +31,7 @@ define(function(require) {
   require([
     'test/eventEmitterSpec.js',
     'test/sceneMapSpec.js',
+    'test/changeableObjectSpec.js',
     'test/interactionSpec.js',
 
   ], function(require) {
