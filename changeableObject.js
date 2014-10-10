@@ -1,33 +1,94 @@
-define(['./defaultListeners', './eventEmitter'], function (defaults, broadcast) {
+define(['./defaultListeners', './eventEmitter', './temporarContent'], function (defaults, broadcast,temp) {
 
   function ChangeableObject(object classes){
     this.dom = object;
 
     //dynamicAppearance related attributes//
-    this.appearances = {};
-    this.currentClass = [];
+    this.appearances = {}; //|| [scene{subscene: 'class'}, scene{subscene: 'class'}]
+                           //|| created by 'dynamic' in DOM class
+                           //|| takes data from DOM data-scenemap
+                           //|| expects 'scene-subscene:class '
+                           //|| can have multiple appearances separated by space
+                           //|| can have scene set to 'unassigned' for random entry
+                           //|| doesn't need a subscene
+                           //|| can have subscene set to 'all', defaults to 'all' if not given
+                           //|| can have 'unassigned' as subscene ***not implemented?**
+                           //|| is used by sceneCheck()
+                           //|| created at initialization
+                           //|| scene can equal 'unassigned' for random appearance
+                           //|| unassigned will be assigned a scene number once chosen
+                           //|| if it contains an 'unassigned', this.unassigned = true
+    this.unassigned = false;
+
+
+    this.currentClass = classes;//|| ['class', 'class', 'class']
+                                //|| created by DOM class
+                                //|| sceneCheck() updates it.
+                                //|| needed so linear logic won't interfere with conditional logic
 
     //dynamicContent related attributes//
-    this.contents = {};
+    this.contents = {}; ///|| [scene{subscene : [child, child, child]}]
+                        ///|| created by 'dynamic-content' in DOM class
+                        ///|| dependent on 'toggle-content' in DOM children classes
+                        ///|| takes data from child's DOM data-scenemap
+                        ///|| expects 'scene-subscene:onclass offclass'
+                        ///|| can only have one 'scene/subscene',
+                        ///|| scene and subscene can be 'unassigned', if both are, it will break
+                        ///|| subscene can be 'all'
+                        ///|| is used by update Children
+
 
     //conditionalContent related attributes//
-    this.onClass = "";
-    this.offClass = "";
-    this.currentState = ["new"];///can be melded with other logic//
-    this.states = [];
+    this.states = [];   ///|| [{condition: ['true class', 'false class']}, ]
+                        ///|| created by 'conditional' in DOM class
+                        ///|| takes data from 'data-condition'
+                        ///|| expects  'condition:truestate||falsestate'
+                        ///|| either can be blank and will default to ''
+                        ///|| is used by changeBooleans
+
 
     //complexAttribute related attributes//
-    this.attributes;
+    this.attributes;    ///|| ['attribute': 'abstract Output', 'attribute': 'abstract Output']
+                        ///|| created by 'result-attribute' in DOM class
+                        ///|| takes data from data-attribute
+                        ///|| expects 'attribute:abstractOutput'
+                        ///|| can take multiple separated by space
+
+
     //complexClass related attributes//
-    this.sources;
+    this.sources;      ////|| ['abstractOutput', 'abstractOutput', 'abstractOutput']
+                        ///|| created by 'result-class' in DOM class
+                      /////|| takes data from data-class
+                      /////|| expects 'abstractOutput'
+                      /////|| can take multiple separated by space
+                      /////|| not very good yet ***needs to be implemented
+
+
     //complexContent related states///
-    this.containers;
+    this.containers;    ///|| {'abstractOutput': '$(.domSelector)' }
+                        ///|| created by 'result-content' in DOM class
+                        ///|| takes data from data-content
+                        ///|| expects '.domSelector:abstractOutput'
+                        ///|| can have multiple separated by space
+                        ///|| not very good yet. ***Need to implement '
 
 
-    this.startingClass = classes;
+                        ///***so close to amazing***//
+                        ///|| should allow for ajax content determined by some sort of routing
+                        ///|| should be established in abstractions.
+                        ///|| ideally could be used to construct a final ajax/file path/ DOM elem
+                        ///|| from various things that happened within the interaction
+                        ///|| and inject that into the content
+
+
+                        ///|| this could be dependent on the data-tracking record (hidden record)
+                        ///|| this could report to said record or I could separate this idea...
+                        ///|| said record would be responsible for ajax/email/etc communication.
+
     this.events = new broadcast(self);
-    this.unassigned = false;
-    defaults.animEnd(this);
+    defaults.animEnd(this); ///inserts animation breaks onto the elements, otherwise CSS freaks out
+                            ///and won't replay previous animations, won't correctly shift animations
+                            ///etc, the animation is restarted every class shift.
     return this;
   };
 
@@ -88,6 +149,9 @@ define(['./defaultListeners', './eventEmitter'], function (defaults, broadcast) 
       }
       return returnedHash;
     }(self);
+
+
+
     //dynamicContent setter//
     this.contents = function(self){
       var returnedArray = {};
@@ -98,12 +162,12 @@ define(['./defaultListeners', './eventEmitter'], function (defaults, broadcast) 
       for( var r=0; r<allTheChildren.length; r++ ){
         var current = allTheChildren[r];
         var classes = current.getAttribute('class');
-        var currentObj = new temp(current, classes);
+        var currentObj = new temp(current, classes);///create child's data object
         var tempscenemap = $(current).data('scenemap').split(':');
         var scene_subscene, pref, suff;
         var on_off = tempscenemap[1].split(' ');
-            currentObj.specialState = on_off[0];
-            currentObj.callbackState = on_off[1];
+            currentObj.specialState = on_off[0];///sets the child's on state
+            currentObj.callbackState = on_off[1];///sets the child's off state
 
           if( isNaN(Number(scene_subscene)) ){
             scene_subscene = tempscenemap[0].split('-');
@@ -126,14 +190,14 @@ define(['./defaultListeners', './eventEmitter'], function (defaults, broadcast) 
             suff = 'all';
           }
 
-
+      ///sets the content array to [scene{subscene : [child, child, child]}]
         if( returnedArray[pref] == undefined ){
           returnedArray[pref] = {};
           returnedArray[pref][suff] = []
         }else if( returnedArray[pref][suff] == undefined ){
           returnedArray[pref][suff] = [];
         }
-        current.removeAttribute('data-scenemap');
+        current.removeAttribute('data-scenemap');///factor out into interaction as 'garbage collection' or something
         returnedArray[pref][suff].push(currentObj)
         self.events.emit('dynamic-content-initialized', [pref, suff]);
         if( pref == 'unassigned' || suff == 'unassigned'){
@@ -144,9 +208,10 @@ define(['./defaultListeners', './eventEmitter'], function (defaults, broadcast) 
       return returnedArray
     }(self);
 
+
+
     //conditionalContent setters//
-    self.startingClass = self.dom.getAttribute('class');
-    this.contents = function(self){
+    this.states = function(self){
       var returnedArray = [];
       var emittedData = [];
       if( $(self.dom).data('condition') ){
@@ -157,9 +222,8 @@ define(['./defaultListeners', './eventEmitter'], function (defaults, broadcast) 
           cond = subsplit[0];
           active = subsplit[1].split("||")[0] || null;
           callback = subsplit[1].split("||")[1] || null;
-          obj = {};
-          obj[cond] = [active, callback];
-          self.states.push(obj);
+          obj = new Condition(cond, active, callback); ///can extract this to an object
+          returnedArray.push(obj);
         }
       } else {
         return null
@@ -168,6 +232,8 @@ define(['./defaultListeners', './eventEmitter'], function (defaults, broadcast) 
       self.events.emit('conditional-initialized');
       return returnedArray;
     }(self);
+
+
 
     //complexAttribute setter//
     var initialSplit = self.dom.getAttribute('data-attribute').split(' ');
@@ -182,6 +248,8 @@ define(['./defaultListeners', './eventEmitter'], function (defaults, broadcast) 
       self.events.emit('complex-attribute-initialized');
     }(self);
 
+
+
     //complexClass setter//
     this.sources = function(self){
       var tempSource = self.dom.getAttribute('data-class').split(' ')
@@ -190,20 +258,22 @@ define(['./defaultListeners', './eventEmitter'], function (defaults, broadcast) 
       self.events.emit('complex-class-initialized');
     }(self);
 
+
+
     //complexContent setter//
-    var initialSplit = self.dom.getAttribute('data-content').split(' ');
-    this.containers = function(self){
-      var tempContainers = {};
-      for(var w=0; w<initialSplit.length; w++){
-        var subSplit = initialSplit[w].split(':');
-        var actualContainer = $(self.dom).find(subSplit[0]).each(function(b){
-          tempContainers[subSplit[1]] = this;
-        })
-        console.log(tempContainers)
-      }
-    self.dom.removeAttribute('data-content');
-    self.events.emit('complex-content-initialized');
-      return tempContainers
+    var initialSplit2 = self.dom.getAttribute('data-content').split(' ');
+      this.containers = function(self){
+        var tempContainers = {};
+        for(var w=0; w<initialSplit2.length; w++){
+          var subSplit = initialSplit2[w].split(':');
+          var actualContainer = $(self.dom).find(subSplit[0]).each(function(b){
+            tempContainers[subSplit[1]] = this;
+          })
+          console.log(tempContainers)
+        }
+      self.dom.removeAttribute('data-content');
+      self.events.emit('complex-content-initialized');
+        return tempContainers
     }(self);
 
   }
@@ -263,7 +333,7 @@ define(['./defaultListeners', './eventEmitter'], function (defaults, broadcast) 
           ///if logic for unassigned scenes/subscenes///
                 var obj = temporaryItems[item]
                 element = obj.dom;
-                classFrom = obj.startingClass;
+                classFrom = obj.defaultClass;
                 element.setAttribute("class", classFrom);
             if(scene == passed_scene){
               if( subscene == passed_subscene || subscene == 'all' ){ obj.currentState = "on"; }
@@ -286,15 +356,14 @@ define(['./defaultListeners', './eventEmitter'], function (defaults, broadcast) 
     }else {
 
       for( var y=0; y<self.states.length; y++){
-        for(var current in self.states[y]){
-          var onState = self.states[y][current][0]
-          var offState = self.states[y][current][1]
-        }
+
+        var onState = self.states[y].trueState;
+        var offState = self.states[y].falseState;
         tempClass = tempClass.replace(" "+onState, "")
         tempClass = tempClass.replace(" "+offState, "")
         tempClass += offState == null ? "" :" "+offState
         for( var state in passed){
-          if(Object.keys(self.states[y]) == passed[state] ){
+          if(self.states[y].assertion == passed[state] ){
             tempClass = tempClass.replace(" "+offState, "")
             tempClass += onState == null ? "" :" "+onState
           }
@@ -307,13 +376,13 @@ define(['./defaultListeners', './eventEmitter'], function (defaults, broadcast) 
   }
 
   //complexAttribute update function//
-  ChangeableObject.prototype.determineAttribute = function(passed){
+  ChangeableObject.prototype.determineAttribute = function(arrayofAttributes){
     var self = this;
     if( passed === undefined ){
       return 'no arguments passed';
     }else {
       for(var attribute in self.attributes){
-        self.dom.style[attribute] =  passed[self.attributes[attribute]].value;
+        self.dom.style[attribute] =  arrayofAttributes[self.attributes[attribute]].value;
       }
       return 'success'
     }
@@ -346,7 +415,11 @@ define(['./defaultListeners', './eventEmitter'], function (defaults, broadcast) 
       return 'success'
     }
   }
-
+  function Condition(assertion, trueState, falseState){
+    this.assertion : assertion,
+    this.trueState : trueState,
+    this.falseState : falseState
+  }
 
 
   return ChangeableObject
